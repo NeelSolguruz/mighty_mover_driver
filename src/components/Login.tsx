@@ -1,25 +1,54 @@
-
-import { ChangeEvent, SetStateAction, useState } from "react";
-import Link from "next/link";
+import { ChangeEvent, SetStateAction, useEffect, useState } from "react";
+// import Link from "next/Link";
 import http from "../http/http";
 import axios, { AxiosError } from "axios";
-import { useRouter } from "next/navigation";
-import NavLogo from "../assets/Images/icons/NavLogo"; 
+// import { useRouter } from "next/navigation";
+import NavLogo from "../assets/Images/icons/NavLogo";
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import { ImCross } from "react-icons/im";
+import { UploadOutlined } from "@ant-design/icons";
 
-
-import { useDispatch, useSelector } from "react-redux";
-import { driverAdd } from "@/redux/driverSlice";
+// import { useDispatch } from "react-redux";
+// import { driverAdd } from "../redux/driverSlice";
 import { toast } from "sonner";
-import { documentData } from "../assets/dto/data.type"; 
+import { documentData } from "../assets/dto/data.type";
 import formhttp from "../http/formHttp";
-import { DID_NOT_GET, OTP_SENT_TO_EMAIL, OTP_VERIFICATION } from "../assets/constant/login";
+import {
+  DID_NOT_GET,
+  DRIVER_LOGIN,
+  LOGIN,
+  OTP_SENT_TO_EMAIL,
+  OTP_VERIFICATION,
+} from "../assets/constant/constaint";
 import { driver_login, verify_driver_otp } from "../http/staticTokenService";
 import Loader from "./Loader";
-export default function DriverLogin() {
-  const router = useRouter();
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Button,
+  Form,
+  Image,
+  Input,
+  Modal,
+  Select,
+  Upload,
+  UploadProps,
+  message,
+} from "antd";
+
+interface Vehicle {
+  id: string;
+  status: string;
+  created_at: string;
+  vehicle_type: string;
+  per_km_charge: number;
+  max_weight: number;
+  length: number;
+  height: number;
+  order_type: string | number;
+}
+
+function Login() {
+  const router = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -27,8 +56,10 @@ export default function DriverLogin() {
   const [loading, setLoading] = useState(false);
   const [otppage, setotppage] = useState(false);
   const [otp, setOtp] = useState("");
-  const dispatch = useDispatch();
-  const data = useSelector((state) => state);
+
+  // const dispatch = useDispatch();
+  const [form] = Form.useForm();
+  // const data = useSelector((state) => state);
 
   const resetForm = () => {
     setEmail("");
@@ -48,15 +79,15 @@ export default function DriverLogin() {
       toast.success(user_details.data.message);
       console.log(user_details.data);
       console.log(user_details.data.data.token);
-      // localStorage.setItem(
-      //   "driver",
-      //   JSON.stringify({
-      //     token: user_details.data.data.token,
-      //     driver: user_details.data.data.name,
-      //     email: user_details.data.data.email,
-      //   })
-      // );
-      dispatch(driverAdd(user_details.data.data));
+      localStorage.setItem(
+        "driver",
+        JSON.stringify({
+          token: user_details.data.data.token,
+          driver: user_details.data.data.name,
+          email: user_details.data.data.email,
+        })
+      );
+      // dispatch(driverAdd(user_details.data.data));
 
       setLoading(false);
       resetForm();
@@ -110,6 +141,42 @@ export default function DriverLogin() {
   };
 
   const [modal, setModal] = useState(false);
+  const [vehicleTypes, setVehicleTypes] = useState<string[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[] | undefined>();
+  const [vehicleFormData, setVehicleFormData] = useState<
+    Vehicle[] | undefined
+  >();
+  // const [perKmCharge, setPerKmCharge] = useState(0);
+  // const [maxWeight, setMaxWeight] = useState(0);
+  // const [length, setLength] = useState(0);
+  // const [height, setHeight] = useState(0);
+  const fetchVehicleTypes = async () => {
+    try {
+      const response = await http.get<{ data: Vehicle[] }>("/api/v1/vehicle");
+      const vehiclesData = response.data.data;
+      console.log(vehiclesData);
+      const uniqueVehicleTypes = Array.from(
+        new Set(vehiclesData?.map((vehicle) => vehicle.vehicle_type))
+      );
+      setVehicleTypes(uniqueVehicleTypes);
+      setVehicles(vehiclesData);
+    } catch (error) {
+      console.error("Error fetching vehicle types:", error);
+    }
+  };
+  const handleVehicleTypeChange = (value: string) => {
+    const selectedVehicle = vehicles?.find(
+      (vehicle: Vehicle) => vehicle.vehicle_type === value
+    );
+    if (selectedVehicle) {
+      form.setFieldsValue(selectedVehicle);
+      console.log("selectedVehicle: ", selectedVehicle);
+      // setVehicleFormData(selectedVehicle);
+    }
+  };
+  useEffect(() => {
+    fetchVehicleTypes();
+  }, []);
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -118,7 +185,7 @@ export default function DriverLogin() {
     try {
       const response = await driver_login({ email, password });
       console.log(response.data.message);
-      console.log(response.data.token);
+      // console.log(response);
       toast.success(response.data.message);
       setotppage(true);
       // setModal(true);
@@ -140,9 +207,7 @@ export default function DriverLogin() {
         resetForm();
       }
     } finally {
-      // router.push('/driver-partner', { scroll: false })
       setLoading(false);
-      // resetForm();
     }
   };
   const inputs = useRef<HTMLInputElement[]>([]);
@@ -173,41 +238,38 @@ export default function DriverLogin() {
     }
   };
 
-  const [vehicleFormData, setVehicleFormData] = useState({
-    vehicle_num: "",
-    max_weight: "",
-    length: "",
-    width: "",
-    per_km_charge: "",
-    vehicle_category: "",
-    order_type: "",
-  });
-
-  const handleVehicleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setVehicleFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
-
-  const handleVehicleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log(vehicleFormData);
+  const handleVehicleSubmit = async () => {
+    console.log("hello");
     setLoading(true);
     try {
-      const response = await http.post(
-        "api/v1/driver/vehicle",
-        vehicleFormData
-      );
-      console.log("Success:", response.data);
+      const formData = form.getFieldsValue();
+      const vehicleTypeEnum: Record<string, number> = {
+        "2 wheeler": 0,
+        "E loader": 1,
+        "3 wheeler": 2,
+        "Tata ace": 3,
+        "Canter 14 ft": 4,
+        "8 ft": 5,
+        "1.7 ton": 6,
+        "tata 407": 7,
+        // Add more enum values as needed
+      };
+      console.log(formData.vehicle_type);
+      const response = await http.post("/api/v1/driver/vehicle", {
+        vehicle_num: formData.vehicle_num,
+        vehicle_type: vehicleTypeEnum[formData.vehicle_type],
+        order_type: formData.order_type,
+      });
+      console.log("api call");
+      console.log("Success:", response);
+
       toast.success(response.data.message);
+      form.resetFields();
       setLoading(false);
+      setModal(false);
       setDocumentModal(true);
     } catch (error) {
-      // setModal(false);
+      setModal(false);
       setLoading(false);
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<{
@@ -225,77 +287,78 @@ export default function DriverLogin() {
       }
     } finally {
       setLoading(false);
-      setVehicleFormData({
-        vehicle_num: "",
-        max_weight: "",
-        length: "",
-        width: "",
-        per_km_charge: "",
-        vehicle_category: "",
-        order_type: "",
-      });
+      // setVehicleFormData({
+      //   vehicle_num: "",
+      //   max_weight: "",
+      //   length: "",
+      //   width: "",
+      //   per_km_charge: "4",
+      //   vehicle_type: "",
+      //   order_type: "",
+      // });
     }
   };
+
+  // const handleVehicleSubmit = async () => {
+  //   try {
+  //     const response = await http.post("/api/v1/driver/vehicle", {
+  //       vehicle_num: "GJ01PK1062",
+  //       vehicle_type: 3,
+  //       order_type: 1,
+  //     });
+  //     console.log("handle submit", response);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   const [documentModal, setDocumentModal] = useState(false);
   const [documentFormData, setDocumentFormData] = useState<documentData>({
     aadhar: null,
     licence: null,
     pancard: null,
-    image: null,
+    vehicle: null,
   });
-  const handleFileChange = (
-    e: ChangeEvent<HTMLInputElement> | null,
-    type: string
-  ) => {
-    setDocumentFormData({
-      ...documentFormData,
-      [type]: e.target.files[0],
-    });
-  };
-
-  const [documentUploadStatus, setDocumentUploadStatus] = useState({
-    aadhar: false,
-    licence: false,
-    pancard: false,
-    vehicle: false,
-  });
-
-  const [anyOneDocument, setAnyOneDocument] = useState(false);
-  const handleDocument = async (type: string) => {
-    // console.log('handleDocument function running')
-    const formData = new FormData();
-    formData.append("image", documentFormData[type] as Blob);
-    formData.append("type", type);
+  const handleDocument = async (type) => {
     setLoading(true);
     try {
+      // Simulate uploading process for demonstration
+      // setTimeout(async () => {
+      //   setLoading(false);
+      //   setDocumentFormData((prevState) => ({
+      //     ...prevState,
+      //     [type]: true,
+      //   }));
+      //   message.success(`${type} document uploaded successfully`);
+      // }, 2000);
+
+      // Uncomment below code for actual API call
+
+      const formData = new FormData();
+      formData.append("image", documentFormData[type]);
+      formData.append("type", type);
+
       const response = await formhttp.post("api/v1/document", formData);
       setLoading(false);
-      toast.success(response.data.message);
-      setDocumentUploadStatus((prevState) => ({
-        ...prevState,
-        [type]: true,
-      }));
-      setAnyOneDocument(true);
+      setDocumentFormData((prevState) => ({ ...prevState, [type]: true }));
+      message.success(response.data.message);
     } catch (error) {
+      setLoading(false);
       if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<{
-          status: number;
-          message: string;
-        }>;
+        const axiosError = error as AxiosError;
         if (axiosError.response) {
-          console.log("Response Error", axiosError.response);
-          toast.error(axiosError.response.data.message);
+          //  message.error(axiosError.response.data.message);
+          console.log(axiosError);
         } else if (axiosError.request) {
           console.log("Request Error", axiosError.request);
         } else {
           console.log("Error", axiosError.message);
         }
       }
-    } finally {
-      setLoading(false);
     }
   };
+
+  
 
   return (
     <>
@@ -424,7 +487,7 @@ export default function DriverLogin() {
                         {LOGIN.password_label}
                       </label>
                       <Link
-                        href="/delivery-forgot-password"
+                        to="/delivery-forgot-password"
                         className="font-semibold text-blue-500 hover:text-blue-400 transition-all"
                       >
                         {LOGIN.forgot_text}
@@ -462,7 +525,7 @@ export default function DriverLogin() {
                     </div>
                   </div>
                   <div className="w-full">
-                    <Link href="/delivery-partner">
+                    <Link to="/delivery-partner">
                       <button className="w-full border-2 border-[#2967ff] p-3 rounded-md font-bold transition-all text-xl text-[#2967ff] hover:text-white hover:bg-[#2967ff]">
                         Create your Driver account
                       </button>
@@ -484,108 +547,72 @@ export default function DriverLogin() {
                   <h1 className="text-3xl font-bold">VEHICLE DETAILS</h1>
                 </div>
                 <div className="w-1/2">
-                  <form
-                    onSubmit={handleVehicleSubmit}
-                    className="grid grid-cols-2 gap-y-5 items-center my-5"
+                  <Modal
+                    open={modal}
+                    onOk={() => form.submit()}
+                    onCancel={() => router("/")}
                   >
-                    <label htmlFor="vehicle_num" className="text-lg">
-                      Vehicle number:
-                    </label>
-                    <input
-                      type="text"
-                      id="vehicle_num"
-                      name="vehicle_num"
-                      placeholder="Enter vehicle number"
-                      className="border border-gray-400 p-2 text-base rounded-lg hover:border-black focus:outline-[#2967ff]"
-                      onChange={handleVehicleChange}
-                      value={vehicleFormData.vehicle_num}
-                    />
-                    <label htmlFor="max_weight" className="text-lg">
-                      Max carrying capacity:{" "}
-                    </label>
-                    <input
-                      type="text"
-                      id="max_weight"
-                      name="max_weight"
-                      placeholder="Enter max weight"
-                      className="border border-gray-400 p-2 text-base rounded-lg hover:border-black focus:outline-[#2967ff]"
-                      onChange={handleVehicleChange}
-                      value={vehicleFormData.max_weight}
-                    />
-                    <label htmlFor="length" className="text-lg">
-                      Length:{" "}
-                    </label>
-                    <input
-                      type="text"
-                      id="length"
-                      name="length"
-                      placeholder="Enter length"
-                      className="border border-gray-400 p-2 text-base rounded-lg hover:border-black focus:outline-[#2967ff]"
-                      onChange={handleVehicleChange}
-                      value={vehicleFormData.length}
-                    />
-                    <label htmlFor="width" className="text-lg">
-                      Width:{" "}
-                    </label>
-                    <input
-                      type="text"
-                      id="width"
-                      name="width"
-                      placeholder="Enter width"
-                      className="border border-gray-400 p-2 text-base rounded-lg hover:border-black focus:outline-[#2967ff]"
-                      onChange={handleVehicleChange}
-                      value={vehicleFormData.width}
-                    />
-                    <label htmlFor="per_km_charge" className="text-lg">
-                      Per KM charge:{" "}
-                    </label>
-                    <input
-                      type="text"
-                      id="per_km_charge"
-                      name="per_km_charge"
-                      placeholder="Enter per km charge"
-                      className="border border-gray-400 p-2 text-base rounded-lg hover:border-black focus:outline-[#2967ff]"
-                      onChange={handleVehicleChange}
-                      value={vehicleFormData.per_km_charge}
-                    />
-                    <label htmlFor="vehicle_category">Vehicle Type:</label>
-                    <select
-                      name="vehicle_category"
-                      id="vehicle_category"
-                      className="p-2 border border-gray-400 rounded-lg hover:border-black focus:outline-[#2967ff] text-gray-400"
-                      onChange={handleVehicleChange}
-                      value={vehicleFormData.vehicle_category}
+                    <Form
+                      form={form}
+                      onFinish={handleVehicleSubmit}
+                      // onAbort={() => router("/")}
                     >
-                      <option value="">Select vehicle category</option>
-                      <option value="2-wheeler">2 Wheeler</option>
-                      <option value="4-wheeler">4 Wheeler</option>
-                    </select>
-                    <label htmlFor="order_type">Order Type:</label>
-                    <select
-                      name="order_type"
-                      id="order_type"
-                      className="p-2 border border-gray-400 rounded-lg hover:border-black focus:outline-[#2967ff] text-gray-400"
-                      onChange={handleVehicleChange}
-                      value={vehicleFormData.order_type}
-                    >
-                      <option value="">Select Order Type</option>
-                      <option value="local">Local</option>
-                      <option value="outdoor">Inter State</option>
-                      <option value="both">Both</option>
-                    </select>
-                    <button
-                      type="submit"
-                      className="bg-[#2967ff] p-2 font-semibold text-white rounded-xl w-[99%]"
-                    >
-                      Submit
-                    </button>
-                    <button
-                      onClick={() => router.push("/delivery-partner")}
-                      className="bg-red-500 p-2 font-semibold text-white rounded-xl w-[99%]"
-                    >
-                      Cancel
-                    </button>
-                  </form>
+                      <Form.Item label="Vehicle number" name="vehicle_num">
+                        <Input
+                          placeholder="Enter vehicle number"
+                          // onChange={handleVehicleChange}
+                          name="vehicle_num"
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        label="Max carrying capacity"
+                        name="max_weight"
+                      >
+                        <Input
+                          readOnly={true}
+                          // value={vehicleFormData.max_weight}
+                        />
+                      </Form.Item>
+                      <Form.Item label="Length" name="length">
+                        <Input readOnly={true} />
+                      </Form.Item>
+                      <Form.Item label="Height" name="height">
+                        <Input readOnly={true} />
+                      </Form.Item>
+                      <Form.Item label="Per KM charge" name="per_km_charge">
+                        <Input readOnly={true} />
+                      </Form.Item>
+                      <Form.Item label="Vehicle Type" name="vehicle_type">
+                        <Select
+                          placeholder="Select vehicle category"
+                          onChange={(value) => handleVehicleTypeChange(value)}
+                          // value={vehicleFormData.vehicle_type}
+                        >
+                          {vehicleTypes.map((type) => (
+                            <Select.Option key={type} value={type}>
+                              {type}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                      <Form.Item label="Order Type" name="order_type">
+                        <Select
+                          placeholder="Select Order Type"
+                          // onChange={(value: Vehicle) =>
+                          //   setVehicleFormData({
+                          //     ...vehicleFormData,
+                          //     order_type: value,
+                          //   })
+                          // }
+                          // value={vehicleFormData.order_type}
+                        >
+                          <Select.Option value={0}>Local</Select.Option>
+                          <Select.Option value={1}>Outdoor</Select.Option>
+                          <Select.Option value={2}>Both</Select.Option>
+                        </Select>
+                      </Form.Item>
+                    </Form>
+                  </Modal>
                 </div>
               </div>
             </motion.div>
@@ -597,7 +624,7 @@ export default function DriverLogin() {
               transition={{ duration: 0.5 }}
               className="fixed top-0 z-10 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
             >
-              <div className="bg-white p-4 rounded-lg w-11/12 h-auto flex flex-col items-center">
+              {/* <div className="bg-white p-4 rounded-lg w-11/12 h-auto flex flex-col items-center">
                 <div
                   className="absolute w-6 h-6 right-[60px] top-12 cursor-pointer"
                   onClick={() => setDocumentModal(false)}
@@ -694,12 +721,57 @@ export default function DriverLogin() {
                   <div className="flex justify-center">
                     <button
                       className="p-2 bg-[#2967ff] w-1/2 rounded-lg text-white font-semibold hover:bg-blue-500"
-                      onClick={() => router.push("/delivery-partner")}
+                      onClick={() => router("/delivery-partner")}
                     >
                       {anyOneDocument ? "Continue" : "Upload Later"}
                     </button>
                   </div>
                 </div>
+              </div> */}
+              <div className="bg-white p-4 rounded-lg w-11/12 h-auto flex flex-col items-center">
+                <Modal open={documentModal} onOk={handleDocument}>
+                  <div>
+                    <h1 className="text-3xl font-bold">Upload Documents</h1>
+                  </div>
+                  <div className="w-1/2 max-lg:w-9/12 max-sm:w-7/12 my-10 grid gap-10">
+                    <Form className="justify-center">
+                      <div className="w-11/12 grid grid-cols-1 items-center  gap-5">
+                        <div className="">
+                          <label htmlFor="aadhar">Aadhar Card:</label>
+                          <Upload maxCount={1} {...uploadProps}>
+                            <Button icon={<UploadOutlined />}>
+                              Click to Upload
+                            </Button>
+                          </Upload>
+                        </div>
+                        <div className="">
+                          <label htmlFor="licence">Licence :</label>
+                          <Upload>
+                            <Button icon={<UploadOutlined />}>
+                              Click to Upload
+                            </Button>
+                          </Upload>
+                        </div>
+                        <div className="">
+                          <label htmlFor="vehicle">vehicle:</label>
+                          <Upload>
+                            <Button icon={<UploadOutlined />}>
+                              Click to Upload
+                            </Button>
+                          </Upload>
+                        </div>
+                        <div className="">
+                          <label htmlFor="pancard">pancard Card:</label>
+                          <Upload>
+                            <Button icon={<UploadOutlined />}>
+                              Click to Upload
+                            </Button>
+                          </Upload>
+                        </div>
+                      </div>
+                    </Form>
+                  </div>
+                </Modal>
               </div>
             </motion.div>
           )}
@@ -708,3 +780,5 @@ export default function DriverLogin() {
     </>
   );
 }
+
+export default Login;

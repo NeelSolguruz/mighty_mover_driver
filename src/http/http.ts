@@ -17,7 +17,7 @@ const generateRequestToken = (config: InternalAxiosRequestConfig) => {
 
 // Create instance of axios
 const http = axios.create({
-  baseURL: "http://192.168.1.6:3000",
+  baseURL: "http://192.168.68.93:3000",
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
@@ -37,7 +37,7 @@ http.interceptors.request.use(
         // config.timeout = 5000
         
         // Set Authorization header
-        const data = localStorage.getItem('user') || null;
+        const data = localStorage.getItem('driver') || null;
         const token = data && JSON.parse(data || '');
         config.headers.Authorization = `Bearer ${token.token} `;
         // console.log(token.token);

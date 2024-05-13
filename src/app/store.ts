@@ -1,15 +1,16 @@
-
-import { configureStore } from '@reduxjs/toolkit';
-import useReducer from '../redux/userSlice';
-import pageReducer from '../redux/pageSlice';
-import rolePermissionReducer from '../redux/roleSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import useReducer from "../redux/userSlice";
+import pageReducer from "../redux/pageSlice";
+import driverReducer from "../redux/driverSlice";
+// import rolePermissionReducer from '../redux/roleSlice';
 
 export const store = configureStore({
-    reducer: {
-        user: useReducer,
-        page: pageReducer,
-        rolePermission: rolePermissionReducer,
-    },
+  reducer: {
+    user: useReducer,
+    page: pageReducer,
+    driver: driverReducer,
+    // rolePermission: rolePermissionReducer,
+  },
 });
 
 export type RootState = ReturnType<typeof store.getState>;
