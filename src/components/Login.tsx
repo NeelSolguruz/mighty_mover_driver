@@ -1,4 +1,4 @@
-import { ChangeEvent, SetStateAction, useEffect, useState } from "react";
+import { SetStateAction, useEffect, useState } from "react";
 // import Link from "next/Link";
 import http from "../http/http";
 import axios, { AxiosError } from "axios";
@@ -11,12 +11,13 @@ import { UploadOutlined } from "@ant-design/icons";
 // import { useDispatch } from "react-redux";
 // import { driverAdd } from "../redux/driverSlice";
 import { toast } from "sonner";
-import { documentData } from "../assets/dto/data.type";
+// import { documentData } from "../assets/dto/data.type";
 import formhttp from "../http/formHttp";
 import {
   DID_NOT_GET,
   DRIVER_LOGIN,
-  LOGIN,
+  LOGIN_DATA_STRING,
+  // LOGIN,
   OTP_SENT_TO_EMAIL,
   OTP_VERIFICATION,
 } from "../assets/constant/constaint";
@@ -26,14 +27,19 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Button,
   Form,
-  Image,
+  // Image,
   Input,
   Modal,
   Select,
   Upload,
-  UploadProps,
+  // UploadProps,
   message,
 } from "antd";
+
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { useDispatch } from "react-redux";
+import { driverAdd } from "../redux/driverSlice";
+import MightyMover from "../assets/Images/icons/MightyMover";
 
 interface Vehicle {
   id: string;
@@ -57,7 +63,7 @@ function Login() {
   const [otppage, setotppage] = useState(false);
   const [otp, setOtp] = useState("");
 
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const [form] = Form.useForm();
   // const data = useSelector((state) => state);
 
@@ -79,14 +85,15 @@ function Login() {
       toast.success(user_details.data.message);
       console.log(user_details.data);
       console.log(user_details.data.data.token);
-      localStorage.setItem(
-        "driver",
-        JSON.stringify({
-          token: user_details.data.data.token,
-          driver: user_details.data.data.name,
-          email: user_details.data.data.email,
-        })
-      );
+      const obj = {
+        token: user_details.data.data.token,
+        driver: user_details.data.data.name,
+        email: user_details.data.data.email,
+      };
+      console.log(obj);
+      localStorage.setItem("Driver", JSON.stringify(obj));
+
+      dispatch(driverAdd(obj));
       // dispatch(driverAdd(user_details.data.data));
 
       setLoading(false);
@@ -111,33 +118,6 @@ function Login() {
       setLoading(false);
       setOtp("");
     }
-  };
-
-  const validateEmail = (value: string | any) => {
-    if (!value.trim()) {
-      setEmailError("Email is required");
-      return false;
-    } else if (!/\S+@\S+\.\S+/.test(value)) {
-      setEmailError("Invalid email address");
-      return false;
-    } else {
-      setEmailError("");
-      return true;
-    }
-  };
-
-  const handleEmailChange = (e: {
-    target: { value: SetStateAction<string> };
-  }) => {
-    setEmail(e.target.value);
-    validateEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e: {
-    target: { value: SetStateAction<string> };
-  }) => {
-    setPassword(e.target.value);
-    // validatePassword(e.target.value);
   };
 
   const [modal, setModal] = useState(false);
@@ -178,8 +158,11 @@ function Login() {
     fetchVehicleTypes();
   }, []);
 
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
-    e.preventDefault();
+  const handleSubmit = async (data) => {
+    console.log("====================================");
+    console.log(data);
+    console.log("====================================");
+    // e.preventDefault();
     setLoading(true);
 
     try {
@@ -313,34 +296,29 @@ function Login() {
   // };
 
   const [documentModal, setDocumentModal] = useState(false);
-  const [documentFormData, setDocumentFormData] = useState<documentData>({
-    aadhar: null,
-    licence: null,
-    pancard: null,
-    vehicle: null,
+  // const [documentFormData, setDocumentFormData] = useState<documentData>({
+  //   aadhar: null,
+  //   licence: null,
+  //   pancard: null,
+  //   vehicle: null,
+  // });
+  const [documentUploadStatus, setDocumentUploadStatus] = useState({
+    aadhar: false,
+    licence: false,
+    pancard: false,
+    vehicle: false,
   });
-  const handleDocument = async (type) => {
+  const handleDocument = async (type, file) => {
+    if (!file) return;
     setLoading(true);
     try {
-      // Simulate uploading process for demonstration
-      // setTimeout(async () => {
-      //   setLoading(false);
-      //   setDocumentFormData((prevState) => ({
-      //     ...prevState,
-      //     [type]: true,
-      //   }));
-      //   message.success(`${type} document uploaded successfully`);
-      // }, 2000);
-
-      // Uncomment below code for actual API call
-
       const formData = new FormData();
-      formData.append("image", documentFormData[type]);
+      formData.append("image", file.originFileObj);
       formData.append("type", type);
-
+      // console.log(formData);
       const response = await formhttp.post("api/v1/document", formData);
       setLoading(false);
-      setDocumentFormData((prevState) => ({ ...prevState, [type]: true }));
+      setDocumentUploadStatus((prevState) => ({ ...prevState, [type]: true }));
       message.success(response.data.message);
     } catch (error) {
       setLoading(false);
@@ -358,8 +336,6 @@ function Login() {
     }
   };
 
-  
-
   return (
     <>
       {loading ? (
@@ -372,9 +348,9 @@ function Login() {
             <div
               className={`flex flex-col items-center gap-10 py-10 w-5/12 max-lg:w-8/12 max-sm:w-11/12`}
             >
-              <div className="w-[180px]">
+              {/* <div className="w-[180px]">
                 <NavLogo />
-              </div>
+              </div> */}
               {otppage ? (
                 <>
                   <motion.div
@@ -444,7 +420,7 @@ function Login() {
               )}
 
               <>
-                <div className="w-full">
+                {/* <div className="w-full">
                   <div>
                     <h1 className="text-4xl font-bold">
                       {DRIVER_LOGIN.sign_in}
@@ -455,8 +431,86 @@ function Login() {
                       {DRIVER_LOGIN.tagline}
                     </h3>
                   </div>
-                </div>
-                <form
+                </div> */}
+                <section className=" min-h-screen flex items-center justify-center">
+                  <div className="w-full max-w-md p-8  rounded-lg shadow-xl ">
+                    <div className="flex justify-center mb-5 w-full h-full">
+                      <div className="w-[50%] h-[50%]">
+                        <NavLogo />
+                      </div>
+                    </div>
+                    <div className="bg-[#2967ff] py-4 px-4 rounded-t-lg text-white">
+                      <h1 className="text-xl text-white font-bold text-center">
+                        {/* <h1 className="text-4xl font-bold"> */}
+                        {DRIVER_LOGIN.sign_in}
+                      </h1>
+                      {/* </h1> */}
+                    </div>
+                    <div className="mt-6">
+                      <Form
+                        name="login-form"
+                        onFinish={handleSubmit}
+                        className="space-y-4"
+                      >
+                        <Form.Item
+                          name="email"
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please input your email!",
+                            },
+                          ]}
+                        >
+                          <Input
+                            prefix={<UserOutlined />}
+                            placeholder={LOGIN_DATA_STRING.EMAIL}
+                            className="input-field"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="password"
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please input your password!",
+                            },
+                          ]}
+                        >
+                          <Input.Password
+                            prefix={<LockOutlined />}
+                            placeholder={LOGIN_DATA_STRING.PASSWORD}
+                            className="input-field"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                          />
+                        </Form.Item>
+
+                        <Form.Item>
+                          <Link
+                            to="/delivery-forgot-password"
+                            className="font-semibold text-blue-500 hover:text-blue-400 transition-all"
+                          >
+                            Forgot Password
+                          </Link>
+                        </Form.Item>
+                        <Form.Item>
+                          <Button
+                            type="primary"
+                            htmlType="submit"
+                            className="btn-signin"
+                            block
+                            style={{ backgroundColor: "#2967ff" }}
+                          >
+                            {LOGIN_DATA_STRING.LOGIN}
+                          </Button>
+                        </Form.Item>
+                      </Form>
+                    </div>
+                  </div>
+                </section>
+                {/* <form
                   onSubmit={handleSubmit}
                   className="w-full flex flex-col gap-10"
                 >
@@ -531,7 +585,7 @@ function Login() {
                       </button>
                     </Link>
                   </div>
-                </form>
+                </form> */}
               </>
             </div>
           </div>
@@ -738,15 +792,27 @@ function Login() {
                       <div className="w-11/12 grid grid-cols-1 items-center  gap-5">
                         <div className="">
                           <label htmlFor="aadhar">Aadhar Card:</label>
-                          <Upload maxCount={1} {...uploadProps}>
+                          <Upload
+                            maxCount={1}
+                            disabled={documentUploadStatus.aadhar}
+                            onChange={(info) =>
+                              handleDocument("aadhar", info.file)
+                            }
+                          >
                             <Button icon={<UploadOutlined />}>
-                              Click to Upload
+                              Click to Upload Aadhar card
                             </Button>
                           </Upload>
                         </div>
                         <div className="">
                           <label htmlFor="licence">Licence :</label>
-                          <Upload>
+                          <Upload
+                            maxCount={1}
+                            disabled={documentUploadStatus.licence}
+                            onChange={(info) =>
+                              handleDocument("licence", info.file)
+                            }
+                          >
                             <Button icon={<UploadOutlined />}>
                               Click to Upload
                             </Button>
@@ -754,7 +820,13 @@ function Login() {
                         </div>
                         <div className="">
                           <label htmlFor="vehicle">vehicle:</label>
-                          <Upload>
+                          <Upload
+                            maxCount={1}
+                            disabled={documentUploadStatus.vehicle}
+                            onChange={(info) =>
+                              handleDocument("vehicle", info.file)
+                            }
+                          >
                             <Button icon={<UploadOutlined />}>
                               Click to Upload
                             </Button>
@@ -762,7 +834,13 @@ function Login() {
                         </div>
                         <div className="">
                           <label htmlFor="pancard">pancard Card:</label>
-                          <Upload>
+                          <Upload
+                            maxCount={1}
+                            disabled={documentUploadStatus.pancard}
+                            onChange={(info) =>
+                              handleDocument("pancard", info.file)
+                            }
+                          >
                             <Button icon={<UploadOutlined />}>
                               Click to Upload
                             </Button>

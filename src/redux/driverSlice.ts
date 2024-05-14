@@ -5,12 +5,16 @@ interface initialState {
   driver: null | string;
   email: null | string;
 }
+const localState = localStorage.getItem("Driver") || "";
+const userData = localState && JSON.parse(localState || "");
 
 const initialState: initialState = {
-  token: null,
-  driver: null,
-  email: null,
+  token: userData.token || null,
+  driver: userData.driver || null,
+  email: userData.email || null,
 };
+
+
 
 const driverSlice = createSlice({
   name: "driver",

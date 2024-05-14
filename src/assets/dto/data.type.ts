@@ -17,4 +17,25 @@ interface MenuItem {
   icon: JSX.Element;
   submenu: MenuItem[];
 }
-export type { documentData, RootState, MenuItem };
+interface ProductTableRowProps {
+  orderId: number;
+  firstName: string;
+  lastName: string;
+  contact: string;
+  Pickup: string;
+  Delivery: string;
+  // pickupTime: string;
+  // deliveryTime: string;
+  Payment_status: string;
+  Payment_type: string;
+  Amount_collect: number;
+  pickup_longitude: string;
+  pickup_latitude: string;
+  delivery_longitude: string;
+  delivery_latitude: string;
+  //   weight: string;
+}
+
+export type AlignType = 'start' | 'end' | 'left' | 'right' | 'center' | 'justify' | 'match-parent';
+
+export type { documentData, RootState, MenuItem, ProductTableRowProps };

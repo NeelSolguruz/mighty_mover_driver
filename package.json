@@ -10,12 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.19.3",
     "@reduxjs/toolkit": "^2.2.4",
+    "algoliasearch": "^4.23.3",
     "antd": "^5.17.0",
     "antd-img-crop": "^4.22.0",
     "axios": "^1.6.8",
     "firebase": "^10.11.1",
     "framer-motion": "^11.1.9",
+    "google-map-react": "^2.2.1",
+    "google-maps-api-loader": "^1.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.2.1",

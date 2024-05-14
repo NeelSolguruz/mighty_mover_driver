@@ -1,12 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
-import useReducer from "../redux/userSlice";
+// import useReducer from "../redux/userSlice";
 import pageReducer from "../redux/pageSlice";
 import driverReducer from "../redux/driverSlice";
 // import rolePermissionReducer from '../redux/roleSlice';
 
 export const store = configureStore({
   reducer: {
-    user: useReducer,
+    // user: useReducer,
     page: pageReducer,
     driver: driverReducer,
     // rolePermission: rolePermissionReducer,
