@@ -1,4 +1,4 @@
-import { SetStateAction, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 // import Link from "next/Link";
 import http from "../http/http";
 import axios, { AxiosError } from "axios";
@@ -6,7 +6,7 @@ import axios, { AxiosError } from "axios";
 import NavLogo from "../assets/Images/icons/NavLogo";
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import { UploadOutlined } from "@ant-design/icons";
+// import { UploadOutlined } from "@ant-design/icons";
 
 // import { useDispatch } from "react-redux";
 // import { driverAdd } from "../redux/driverSlice";
@@ -17,29 +17,31 @@ import {
   DID_NOT_GET,
   DRIVER_LOGIN,
   LOGIN_DATA_STRING,
+  OTP_SENT_DESC,
   // LOGIN,
   OTP_SENT_TO_EMAIL,
   OTP_VERIFICATION,
 } from "../assets/constant/constaint";
 import { driver_login, verify_driver_otp } from "../http/staticTokenService";
 import Loader from "./Loader";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Button,
   Form,
+  Image,
   // Image,
   Input,
   Modal,
   Select,
   Upload,
   // UploadProps,
-  message,
+  // message,
 } from "antd";
 
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { driverAdd } from "../redux/driverSlice";
-import MightyMover from "../assets/Images/icons/MightyMover";
+import useFcmToken from "../utils/FCM/useFcmToken";
 
 interface Vehicle {
   id: string;
@@ -54,85 +56,102 @@ interface Vehicle {
 }
 
 function Login() {
-  const router = useNavigate();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  const [localEmail, setLocalEmail] = useState("");
+  const [localDriver, setLocalDriver] = useState("");
+  const [localToken, setLocalToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [otppage, setotppage] = useState(false);
-  const [otp, setOtp] = useState("");
+  const [modal, setModal] = useState(false);
+  const [vehicleTypes, setVehicleTypes] = useState<string[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[] | undefined>();
+  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
+  const inputRefs = useRef<HTMLInputElement[] | null>([]);
+  // const [otp, setOtp] = useState("");
 
   const dispatch = useDispatch();
   const [form] = Form.useForm();
-  // const data = useSelector((state) => state);
+
+  const fcm_token = useFcmToken();
+  if (fcm_token) {
+    localStorage.setItem("fcm_token", fcm_token);
+  }
 
   const resetForm = () => {
     setEmail("");
-    setPassword("");
-    setEmailError("");
-    setPasswordError("");
   };
+  console.log("otp", otp.join());
+  const [flag, setFlag] = useState(false);
+  console.log("flag", flag);
   const verifyotp = async () => {
     setLoading(true);
+
     try {
       const ftoken = localStorage.getItem("fcm_token");
       const user_details = await verify_driver_otp({
         email: email,
-        OTP: otp,
+        OTP: otp.join(""),
         fcm_token: ftoken,
       });
-      toast.success(user_details.data.message);
-      console.log(user_details.data);
-      console.log(user_details.data.data.token);
-      const obj = {
-        token: user_details.data.data.token,
-        driver: user_details.data.data.name,
-        email: user_details.data.data.email,
-      };
-      console.log(obj);
-      localStorage.setItem("Driver", JSON.stringify(obj));
-
-      dispatch(driverAdd(obj));
-      // dispatch(driverAdd(user_details.data.data));
-
-      setLoading(false);
-      resetForm();
-      setModal(true);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<{
-          status: number;
-          message: string;
-        }>;
-        if (axiosError.response) {
-          console.log("Response Error", axiosError.response);
-          toast.error(axiosError.response.data.message);
-        } else if (axiosError.request) {
-          console.log("Request Error", axiosError.request);
-        } else {
-          console.log("Error", axiosError.message);
-        }
+     const updatedFlag = user_details.data.data.flag;
+     setFlag(updatedFlag);
+      if (updatedFlag == true) {
+        navigate("/");
+        const obj = {
+          token: user_details.data.data.token,
+          driver: user_details.data.data.name,
+          email: user_details.data.data.email,
+        };
+        setFlag(false);
+        console.log("after flag", !flag);
+        console.log(obj);
+        localStorage.setItem("Driver", JSON.stringify(obj));
+      } else {
+        setLocalDriver(user_details.data.data.name);
+        setLocalEmail(user_details.data.data.email);
+        const obj = {
+          token: user_details.data.data.token,
+        };
+        console.log(obj);
+        localStorage.setItem("Driver", JSON.stringify(obj));
+        setLoading(false);
+        resetForm();
+        setotppage(false);
+        setModal(true);
       }
+
+      toast.success(user_details.data.message);
+      // console.log(user_details.data);
+      // console.log(user_details.data.data.token);
+      // setLocalToken(user_details.data.data.token);
+      // setLocalDriver(user_details.data.data.name);
+      // setLocalEmail(user_details.data.data.email);
+
+      // console.log(obj);
+      // localStorage.setItem("Driver", JSON.stringify(obj));
+
+      // dispatch(driverAdd(obj));
+      // const obj = {
+      //   token: localToken,
+      //   // driver: localDriver,
+      //   // email: localEmail,
+      // };
+    } catch (error) {
+      handleError(error as Error);
     } finally {
+      console.log("final flag", flag);
+
       setLoading(false);
-      setOtp("");
+      setOtp(["", "", "", "", "", ""]);
     }
   };
-
-  const [modal, setModal] = useState(false);
-  const [vehicleTypes, setVehicleTypes] = useState<string[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[] | undefined>();
-  const [vehicleFormData, setVehicleFormData] = useState<
-    Vehicle[] | undefined
-  >();
-  // const [perKmCharge, setPerKmCharge] = useState(0);
-  // const [maxWeight, setMaxWeight] = useState(0);
-  // const [length, setLength] = useState(0);
-  // const [height, setHeight] = useState(0);
   const fetchVehicleTypes = async () => {
+    console.log("Fetch api called");
     try {
       const response = await http.get<{ data: Vehicle[] }>("/api/v1/vehicle");
+      console.log("response", response);
       const vehiclesData = response.data.data;
       console.log(vehiclesData);
       const uniqueVehicleTypes = Array.from(
@@ -141,7 +160,7 @@ function Login() {
       setVehicleTypes(uniqueVehicleTypes);
       setVehicles(vehiclesData);
     } catch (error) {
-      console.error("Error fetching vehicle types:", error);
+      handleError(error as Error);
     }
   };
   const handleVehicleTypeChange = (value: string) => {
@@ -152,6 +171,23 @@ function Login() {
       form.setFieldsValue(selectedVehicle);
       console.log("selectedVehicle: ", selectedVehicle);
       // setVehicleFormData(selectedVehicle);
+    }
+  };
+
+  const handleError = (error: Error) => {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<{
+        status: number;
+        message: string;
+      }>;
+      if (axiosError.response) {
+        console.log("Response Error", axiosError.response);
+        toast.error(axiosError.response.data.message);
+      } else if (axiosError.request) {
+        console.log("Request Error", axiosError.request);
+      } else {
+        console.log("Error", axiosError.message);
+      }
     }
   };
   useEffect(() => {
@@ -166,61 +202,63 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await driver_login({ email, password });
+      const response = await driver_login({
+        email: data.email,
+        password: data.password,
+      });
       console.log(response.data.message);
       // console.log(response);
       toast.success(response.data.message);
       setotppage(true);
+      setEmail(data.email);
+      setPassword(data.password);
       // setModal(true);
     } catch (error) {
       setModal(false);
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<{
-          status: number;
-          message: string;
-        }>;
-        if (axiosError.response) {
-          console.log("Response Error", axiosError.response);
-          toast.error(axiosError.response.data.message);
-        } else if (axiosError.request) {
-          console.log("Request Error", axiosError.request);
-        } else {
-          console.log("Error", axiosError.message);
-        }
-        resetForm();
-      }
+      handleError(error as Error);
     } finally {
       setLoading(false);
     }
   };
-  const inputs = useRef<HTMLInputElement[]>([]);
-
-  const focusNextInput = (index: number) => {
-    const nextIndex = index + 1;
-    if (nextIndex < inputs.current.length) {
-      inputs.current[nextIndex].focus();
-    }
-  };
-
-  const handleInput = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    index: number
-  ) => {
-    const value = e.target.value;
-    if (value.length > 0) {
-      setOtp((prevOtp) => {
-        const newOtp = prevOtp + value;
-        if (newOtp.length === inputs.current.length) {
-          console.log("Final OTP:", newOtp);
-          setOtp(newOtp);
-          console.log("otp state", otp);
-        }
-        return newOtp;
+  const handleDidNotGet = async () => {
+    setLoading(true);
+    console.log("email :", email);
+    try {
+      const response = await driver_login({
+        email: email,
+        password: password,
       });
-      focusNextInput(index);
+      console.log(response.data.message);
+      setLoading(false);
+      setotppage(true);
+    } catch (error) {
+      handleError(error as Error);
     }
   };
 
+  const handleChange = (index: number, value: string) => {
+    const newOtp = [...otp];
+    newOtp[index] = value;
+
+    if (value && index < otp.length - 1 && inputRefs.current) {
+      inputRefs.current[index + 1].focus();
+    }
+    console.log("otp index", newOtp);
+    setOtp(newOtp);
+  };
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Backspace" && index > 0 && !otp[index]) {
+      const newOtp = [...otp];
+      if (inputRefs.current && inputRefs.current[index - 1]) {
+        inputRefs.current[index - 1].focus();
+      }
+      newOtp[index - 1] = "";
+      setOtp(newOtp);
+    }
+  };
   const handleVehicleSubmit = async () => {
     console.log("hello");
     setLoading(true);
@@ -254,54 +292,18 @@ function Login() {
     } catch (error) {
       setModal(false);
       setLoading(false);
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<{
-          status: number;
-          message: string;
-        }>;
-        if (axiosError.response) {
-          console.log("Response Error", axiosError.response);
-          toast.error(axiosError.response.data.message);
-        } else if (axiosError.request) {
-          console.log("Request Error", axiosError.request);
-        } else {
-          console.log("Error", axiosError.message);
-        }
-      }
+      handleError(error as Error);
     } finally {
       setLoading(false);
-      // setVehicleFormData({
-      //   vehicle_num: "",
-      //   max_weight: "",
-      //   length: "",
-      //   width: "",
-      //   per_km_charge: "4",
-      //   vehicle_type: "",
-      //   order_type: "",
-      // });
     }
   };
 
-  // const handleVehicleSubmit = async () => {
-  //   try {
-  //     const response = await http.post("/api/v1/driver/vehicle", {
-  //       vehicle_num: "GJ01PK1062",
-  //       vehicle_type: 3,
-  //       order_type: 1,
-  //     });
-  //     console.log("handle submit", response);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
   const [documentModal, setDocumentModal] = useState(false);
-  // const [documentFormData, setDocumentFormData] = useState<documentData>({
-  //   aadhar: null,
-  //   licence: null,
-  //   pancard: null,
-  //   vehicle: null,
-  // });
+
+  const [aadharPreview, setAadharPreview] = useState("");
+  const [licencePreview, setLicencePreview] = useState("");
+  const [vehiclePreview, setVehiclePreview] = useState("");
+  const [pancardPreview, setPancardPreview] = useState("");
   const [documentUploadStatus, setDocumentUploadStatus] = useState({
     aadhar: false,
     licence: false,
@@ -311,28 +313,39 @@ function Login() {
   const handleDocument = async (type, file) => {
     if (!file) return;
     setLoading(true);
+    const imageUrl = URL.createObjectURL(file.originFileObj);
+    if (type === "aadhar") {
+      setAadharPreview(imageUrl);
+    } else if (type === "licence") {
+      setLicencePreview(imageUrl);
+    } else if (type === "vehicle") {
+      setVehiclePreview(imageUrl);
+    } else if (type === "pancard") {
+      setPancardPreview(imageUrl);
+    }
+    // setPreviewImage(file.originFileObj);
+    console.log("file.originFileObj:", file.originFileObj);
     try {
       const formData = new FormData();
       formData.append("image", file.originFileObj);
       formData.append("type", type);
-      // console.log(formData);
       const response = await formhttp.post("api/v1/document", formData);
       setLoading(false);
+
       setDocumentUploadStatus((prevState) => ({ ...prevState, [type]: true }));
-      message.success(response.data.message);
+      toast.success(response.data.message);
+      const obj = {
+        token: localToken,
+        driver: localDriver,
+        email: localEmail,
+      };
+      console.log(obj);
+      localStorage.setItem("Driver", JSON.stringify(obj));
+
+      dispatch(driverAdd(obj));
     } catch (error) {
       setLoading(false);
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError;
-        if (axiosError.response) {
-          //  message.error(axiosError.response.data.message);
-          console.log(axiosError);
-        } else if (axiosError.request) {
-          console.log("Request Error", axiosError.request);
-        } else {
-          console.log("Error", axiosError.message);
-        }
-      }
+      handleError(error as Error);
     }
   };
 
@@ -345,513 +358,429 @@ function Login() {
       ) : (
         <>
           <div className="w-full flex justify-center">
-            <div
-              className={`flex flex-col items-center gap-10 py-10 w-5/12 max-lg:w-8/12 max-sm:w-11/12`}
-            >
-              {/* <div className="w-[180px]">
+            {/* <div className="w-[180px]">
                 <NavLogo />
               </div> */}
-              {otppage ? (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-[10] flex justify-center items-center"
-                  >
-                    <div className="w-[35%] flex justify-center items-center gap-2 p-10 bg-white rounded-lg max-[1228px]:w-[40%] max-[1025px]:w-[50%] max-[818px]:w-[60%] max-[683px]:w-[70%] max-[587px]:w-[80%] max-[517px]:w-[90%] max-[455px]:p-4 max-[386px]:p-2">
-                      <div className="w-full flex flex-col justify-center p-4 gap-6">
-                        <div className="w-full flex justify-center">
-                          <div className="w-[180px]">
-                            <NavLogo />
-                          </div>
-                        </div>
-                        <h1 className="text-4xl font-bold tracking-wide text-center max-[332px]:text-3xl ">
-                          {OTP_VERIFICATION}
-                        </h1>
-
-                        <div className="flex justify-center gap-2 items-center">
-                          <div className="max-[455px]:text-sm w-full text-end max-[360px]:text-xs">
-                            {OTP_SENT_TO_EMAIL}
-                          </div>
-                          <div>
-                            <h5 className="text-lg font-bold text-center">
-                              {email.split("").map((item, index) => (
-                                <>{index <= 4 ? <>{"*"}</> : <>{item}</>}</>
-                              ))}
-                            </h5>
-                          </div>
-                        </div>
-                        <div className="flex w-full justify-center items-center gap-4 ">
-                          {[...Array(6)].map((_, index) => (
-                            <input
-                              key={index}
-                              ref={(el) =>
-                                (inputs.current[index] = el as HTMLInputElement)
-                              }
-                              type="text"
-                              id={`otp${index + 1}`}
-                              className="border border-black w-10 h-10 rounded-lg text-center text-xl font-medium max-[386px]:w-8 max-[386px]:h-8 "
-                              maxLength={1}
-                              onInput={(e) => handleInput(e, index)}
-                            />
-                          ))}
-                        </div>
-                        <div
-                          className="flex w-full justify-end items-center text-gray-400 text-xs"
-                          onClick={handleSubmit}
+            {otppage ? (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-[10] flex justify-center items-center"
+                >
+                  <div className=" relative w-[35%] flex justify-center items-center gap-2 p-10 bg-white rounded-lg max-[1228px]:w-[40%] max-[1025px]:w-[50%] max-[818px]:w-[60%] max-[683px]:w-[70%] max-[587px]:w-[80%] max-[517px]:w-[90%] max-[455px]:p-4 max-[386px]:p-2">
+                    <div className="">
+                      <button
+                        className=" absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none "
+                        onClick={() => setotppage(false)} // Add a function to handle the close action
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
                         >
-                          {DID_NOT_GET}
-                        </div>
-                        <div className="flex w-full justify-center items-center ">
-                          <button
-                            className="border-none bg-[#2967ff] text-white font-bold px-10 py-4 rounded-lg text-xl"
-                            onClick={verifyotp}
-                          >
-                            Verify OTP
-                          </button>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="w-full flex flex-col justify-center p-4 gap-6">
+                      <div className="w-full flex justify-center">
+                        <div className="w-[40%]">
+                          <NavLogo />
                         </div>
                       </div>
+                      <h1 className="text-2xl font-bold text-center max-[332px]:text-3xl ">
+                        {OTP_VERIFICATION}
+                      </h1>
+                      <div className="max-[455px]:text-sm text-center max-[360px]:text-xs w-auto">
+                        {OTP_SENT_DESC}
+                      </div>
+                      <div className="flex justify-center w-auto items-center">
+                        <div className="max-[455px]:text-sm  text-center max-[360px]:text-xs w-auto">
+                          {OTP_SENT_TO_EMAIL}
+                        </div>
+                        <div>
+                          <h5 className="text-lg font-bold text-center">
+                            {email.split("").map((item, index) => (
+                              <>{index <= 4 ? <>{"*"}</> : <>{item}</>}</>
+                            ))}
+                          </h5>
+                        </div>
+                      </div>
+                      <div className="flex w-full justify-center items-center gap-4 ">
+                        {/* {[...Array(6)].map((_, index) => ( */}
+                        {/* // <input
+                            //   key={index}
+                            //   ref={(el) =>
+                            //     (inputs.current[index] = el as HTMLInputElement)
+                            //   }
+                            //   type="text"
+                            //   id={`otp${index + 1}`}
+                            //   className="border border-black w-10 h-10 rounded-lg text-center text-xl font-medium max-[386px]:w-8 max-[386px]:h-8 "
+                            //   maxLength={1}
+                            //   onInput={(e) => handleInput(e, index)}
+                            // />
+                          // ))} */}
+                        {otp.map((digit, index) => (
+                          <Input
+                            key={index}
+                            className="border border-black w-10 h-10 rounded-lg text-center text-xl font-medium max-[386px]:w-8 max-[386px]:h-8 "
+                            type="text"
+                            maxLength={1}
+                            value={digit}
+                            autoFocus={index === 0}
+                            ref={(ref) => (inputRefs.current[index] = ref)}
+                            onChange={(e) =>
+                              handleChange(index, e.target.value)
+                            }
+                            onKeyDown={(e) => handleKeyDown(index, e)}
+                          />
+                        ))}
+                      </div>
+                      <div
+                        className="flex w-full justify-end items-center text-gray-400 text-xs"
+                        onClick={handleDidNotGet}
+                      >
+                        {DID_NOT_GET}
+                      </div>
+                      <div className="flex w-full justify-center items-center ">
+                        <button
+                          className="border-none bg-[#2967ff] text-white font-bold px-10 py-4 rounded-lg text-xl"
+                          onClick={verifyotp}
+                        >
+                          Verify OTP
+                        </button>
+                      </div>
                     </div>
-                  </motion.div>
-                </>
-              ) : (
-                <></>
-              )}
-
-              <>
-                {/* <div className="w-full">
-                  <div>
-                    <h1 className="text-4xl font-bold">
+                  </div>
+                </motion.div>
+              </>
+            ) : (
+              <></>
+            )}
+            <>
+              <section className=" min-h-screen flex items-center justify-center ">
+                <div className="w-full max-w-md p-8  rounded-lg shadow-xl ">
+                  <div className="flex justify-center mb-5 w-full h-full">
+                    <div className="w-[50%] h-[50%]">
+                      <NavLogo />
+                    </div>
+                  </div>
+                  <div className="bg-[#2967ff] py-4 px-4 rounded-t-lg text-white">
+                    <h1 className="text-xl text-white font-bold text-center">
+                      {/* <h1 className="text-4xl font-bold"> */}
                       {DRIVER_LOGIN.sign_in}
                     </h1>
+                    {/* </h1> */}
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-semibold">
-                      {DRIVER_LOGIN.tagline}
-                    </h3>
-                  </div>
-                </div> */}
-                <section className=" min-h-screen flex items-center justify-center">
-                  <div className="w-full max-w-md p-8  rounded-lg shadow-xl ">
-                    <div className="flex justify-center mb-5 w-full h-full">
-                      <div className="w-[50%] h-[50%]">
-                        <NavLogo />
-                      </div>
-                    </div>
-                    <div className="bg-[#2967ff] py-4 px-4 rounded-t-lg text-white">
-                      <h1 className="text-xl text-white font-bold text-center">
-                        {/* <h1 className="text-4xl font-bold"> */}
-                        {DRIVER_LOGIN.sign_in}
-                      </h1>
-                      {/* </h1> */}
-                    </div>
-                    <div className="mt-6">
-                      <Form
-                        name="login-form"
-                        onFinish={handleSubmit}
-                        className="space-y-4"
-                      >
-                        <Form.Item
-                          name="email"
-                          rules={[
-                            {
-                              required: true,
-                              message: "Please input your email!",
-                            },
-                          ]}
-                        >
-                          <Input
-                            prefix={<UserOutlined />}
-                            placeholder={LOGIN_DATA_STRING.EMAIL}
-                            className="input-field"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                          />
-                        </Form.Item>
-                        <Form.Item
-                          name="password"
-                          rules={[
-                            {
-                              required: true,
-                              message: "Please input your password!",
-                            },
-                          ]}
-                        >
-                          <Input.Password
-                            prefix={<LockOutlined />}
-                            placeholder={LOGIN_DATA_STRING.PASSWORD}
-                            className="input-field"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                          />
-                        </Form.Item>
-
-                        <Form.Item>
-                          <Link
-                            to="/delivery-forgot-password"
-                            className="font-semibold text-blue-500 hover:text-blue-400 transition-all"
-                          >
-                            Forgot Password
-                          </Link>
-                        </Form.Item>
-                        <Form.Item>
-                          <Button
-                            type="primary"
-                            htmlType="submit"
-                            className="btn-signin"
-                            block
-                            style={{ backgroundColor: "#2967ff" }}
-                          >
-                            {LOGIN_DATA_STRING.LOGIN}
-                          </Button>
-                        </Form.Item>
-                      </Form>
-                    </div>
-                  </div>
-                </section>
-                {/* <form
-                  onSubmit={handleSubmit}
-                  className="w-full flex flex-col gap-10"
-                >
-                  <div className="flex flex-col gap-1 w-full">
-                    <label htmlFor="user" className="font-bold text-lg">
-                      {LOGIN.email_label}
-                    </label>
-                    <input
-                      type="text"
-                      id="username"
-                      placeholder="Enter your email address"
-                      className={`p-3 w-full border transition-all border-gray-400 hover:border-black text-lg rounded-md focus:outline-2 focus:outline-blue-500
-                                ${emailError ? " border-red-500" : ""}`}
-                      value={email}
-                      onChange={handleEmailChange}
-                    />
-                    <p
-                      className={`text-red-500 transition-all ${
-                        emailError ? "opacity-100" : "opacity-0"
-                      }`}
-                    >
-                      {emailError}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-1 w-full">
-                    <div className="flex justify-between">
-                      <label htmlFor="password" className="font-bold text-lg">
-                        {LOGIN.password_label}
-                      </label>
-                      <Link
-                        to="/delivery-forgot-password"
-                        className="font-semibold text-blue-500 hover:text-blue-400 transition-all"
-                      >
-                        {LOGIN.forgot_text}
-                      </Link>
-                    </div>
-                    <input
-                      type="password"
-                      id="password"
-                      placeholder="Enter your password"
-                      className={`p-3 w-full border transition-all border-gray-400 hover:border-black text-lg rounded-md focus:outline-2 focus:outline-blue-500
-                                ${passwordError ? "border-red-500" : ""}`}
-                      value={password}
-                      onChange={handlePasswordChange}
-                    />
-                    <p
-                      className={`text-red-500 transition-all ${
-                        passwordError ? "opacity-100" : "opacity-0"
-                      }`}
-                    >
-                      {passwordError}
-                    </p>
-                  </div>
-                  <div className="w-full">
-                    <button className="bg-[#2967ff] text-white w-full p-3 rounded-md font-bold hover:bg-blue-500 transition-all text-xl">
-                      Submit
-                    </button>
-                  </div>
-                  <div className="w-full flex justify-center">
-                    <div className="w-full flex text-center mt-[10px] mx-[0] mb-[20px]">
-                      <div className="border border-gray-400 w-full" />
-                      <h2 className="bg-[#fff] px-[10px] leading-[0.1em] py-[0] font-bold">
-                        OR
-                      </h2>
-                      <div className="border border-gray-400 w-full" />
-                    </div>
-                  </div>
-                  <div className="w-full">
-                    <Link to="/delivery-partner">
-                      <button className="w-full border-2 border-[#2967ff] p-3 rounded-md font-bold transition-all text-xl text-[#2967ff] hover:text-white hover:bg-[#2967ff]">
-                        Create your Driver account
-                      </button>
-                    </Link>
-                  </div>
-                </form> */}
-              </>
-            </div>
-          </div>
-          {modal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="fixed top-0 z-10 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
-            >
-              <div className="bg-white p-4 rounded-lg w-11/12 h-auto flex flex-col items-center">
-                <div>
-                  <h1 className="text-3xl font-bold">VEHICLE DETAILS</h1>
-                </div>
-                <div className="w-1/2">
-                  <Modal
-                    open={modal}
-                    onOk={() => form.submit()}
-                    onCancel={() => router("/")}
-                  >
+                  <div className="mt-6">
                     <Form
-                      form={form}
-                      onFinish={handleVehicleSubmit}
-                      // onAbort={() => router("/")}
+                      name="login-form"
+                      onFinish={handleSubmit}
+                      className="space-y-4"
                     >
-                      <Form.Item label="Vehicle number" name="vehicle_num">
+                      <Form.Item
+                        name="email"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please input your email!",
+                          },
+                        ]}
+                      >
                         <Input
-                          placeholder="Enter vehicle number"
-                          // onChange={handleVehicleChange}
-                          name="vehicle_num"
+                          prefix={<UserOutlined />}
+                          placeholder={LOGIN_DATA_STRING.EMAIL}
+                          className="input-field"
+                          // value={email}
+                          // onChange={(e) => setEmail(e.target.value)}
                         />
                       </Form.Item>
                       <Form.Item
-                        label="Max carrying capacity"
-                        name="max_weight"
+                        name="password"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please input your password!",
+                          },
+                        ]}
                       >
-                        <Input
-                          readOnly={true}
-                          // value={vehicleFormData.max_weight}
+                        <Input.Password
+                          prefix={<LockOutlined />}
+                          placeholder={LOGIN_DATA_STRING.PASSWORD}
+                          className="input-field"
+                          // value={password}
+                          // onChange={(e) => setPassword(e.target.value)}
                         />
                       </Form.Item>
-                      <Form.Item label="Length" name="length">
-                        <Input readOnly={true} />
-                      </Form.Item>
-                      <Form.Item label="Height" name="height">
-                        <Input readOnly={true} />
-                      </Form.Item>
-                      <Form.Item label="Per KM charge" name="per_km_charge">
-                        <Input readOnly={true} />
-                      </Form.Item>
-                      <Form.Item label="Vehicle Type" name="vehicle_type">
-                        <Select
-                          placeholder="Select vehicle category"
-                          onChange={(value) => handleVehicleTypeChange(value)}
-                          // value={vehicleFormData.vehicle_type}
+
+                      <Form.Item>
+                        <label
+                          onClick={() => navigate("/login/forgot-password")}
+                          // to="/login/forgot-password"
+                          className="font-semibold text-blue-500 hover:text-blue-400 transition-all flex justify-end"
                         >
-                          {vehicleTypes.map((type) => (
-                            <Select.Option key={type} value={type}>
-                              {type}
-                            </Select.Option>
-                          ))}
-                        </Select>
+                          Forgot Password
+                        </label>
                       </Form.Item>
-                      <Form.Item label="Order Type" name="order_type">
-                        <Select
-                          placeholder="Select Order Type"
-                          // onChange={(value: Vehicle) =>
-                          //   setVehicleFormData({
-                          //     ...vehicleFormData,
-                          //     order_type: value,
-                          //   })
-                          // }
-                          // value={vehicleFormData.order_type}
+                      <Form.Item>
+                        <Button
+                          type="primary"
+                          htmlType="submit"
+                          className="btn-signin"
+                          block
+                          style={{ backgroundColor: "#2967ff" }}
                         >
-                          <Select.Option value={0}>Local</Select.Option>
-                          <Select.Option value={1}>Outdoor</Select.Option>
-                          <Select.Option value={2}>Both</Select.Option>
-                        </Select>
+                          {LOGIN_DATA_STRING.LOGIN}
+                        </Button>
                       </Form.Item>
                     </Form>
-                  </Modal>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-          {documentModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="fixed top-0 z-10 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
-            >
-              {/* <div className="bg-white p-4 rounded-lg w-11/12 h-auto flex flex-col items-center">
-                <div
-                  className="absolute w-6 h-6 right-[60px] top-12 cursor-pointer"
-                  onClick={() => setDocumentModal(false)}
+              </section>
+            </>
+          </div>
+          {/* </div> */}
+          {flag == false && (
+            <>
+              {modal && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="top-0 z-10 left-0 w-full h-full bg-black bg-opacity-50"
                 >
-                  <ImCross className="w-full h-full" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold">Upload Documents</h1>
-                </div>
-                <div className="w-1/2 max-lg:w-9/12 max-sm:w-7/12 my-10 grid gap-10">
-                  <form className="flex justify-center">
-                    <div className="w-10/12 grid grid-cols-2 items-center gap-y-5 gap-x-5">
-                      <div className="">
-                        <label htmlFor="aadhar">Aadhar Card:</label>
-                        <input
-                          type="file"
-                          id="aadhar"
-                          name="aadhar"
-                          onChange={(e) => handleFileChange(e, "aadhar")}
-                          disabled={documentUploadStatus.aadhar}
-                        />
-                      </div>
-                      <div className="">
-                        <button
-                          onClick={() => handleDocument("aadhar")}
-                          type="button"
-                          className="bg-[#2967ff] text-white rounded-xl p-1 w-full"
+                  <div className="bg-white p-4 rounded-lg w-11/12 h-auto flex flex-col items-center">
+                    <div>
+                      <h1 className="text-3xl font-bold">VEHICLE DETAILS</h1>
+                    </div>
+                    <div className="w-1/2">
+                      <Modal
+                        open={modal}
+                        onOk={() => form.submit()}
+                        onCancel={() => navigate("/")}
+                      >
+                        <Form
+                          form={form}
+                          onFinish={handleVehicleSubmit}
+                          className="p-3 m-3"
+                          labelCol={{ span: 8 }}
+                          wrapperCol={{ span: 14 }}
+                          style={{ maxWidth: 600 }}
+                          // onAbort={() => router("/")}
                         >
-                          Upload
-                        </button>
-                      </div>
-
+                          <Form.Item label="Vehicle Number" name="vehicle_num">
+                            <Input
+                              placeholder="Enter vehicle number"
+                              // onChange={handleVehicleChange}
+                              name="vehicle_num"
+                            />
+                          </Form.Item>
+                          <Form.Item label="Vehicle Type" name="vehicle_type">
+                            <Select
+                              placeholder="Select vehicle category"
+                              onChange={(value) =>
+                                handleVehicleTypeChange(value)
+                              }
+                              // value={vehicleFormData.vehicle_type}
+                            >
+                              {vehicleTypes.map((type) => (
+                                <Select.Option key={type} value={type}>
+                                  {type}
+                                </Select.Option>
+                              ))}
+                            </Select>
+                          </Form.Item>
+                          <Form.Item label="Order Type" name="order_type">
+                            <Select
+                              placeholder="Select Order Type"
+                              // onChange={(value: Vehicle) =>
+                              //   setVehicleFormData({
+                              //     ...vehicleFormData,
+                              //     order_type: value,
+                              //   })
+                              // }
+                              // value={vehicleFormData.order_type}
+                            >
+                              <Select.Option value={0}>Local</Select.Option>
+                              <Select.Option value={1}>Outdoor</Select.Option>
+                              <Select.Option value={2}>Both</Select.Option>
+                            </Select>
+                          </Form.Item>
+                          <Form.Item label="Max Weight" name="max_weight">
+                            <Input
+                              readOnly={true}
+                              disabled
+                              // value={vehicleFormData.max_weight}
+                            />
+                          </Form.Item>
+                          <Form.Item label="Length" name="length">
+                            <Input readOnly={true} disabled />
+                          </Form.Item>
+                          <Form.Item label="Height" name="height">
+                            <Input readOnly={true} disabled />
+                          </Form.Item>
+                          <Form.Item label="Per KM charge" name="per_km_charge">
+                            <Input readOnly={true} disabled />
+                          </Form.Item>
+                        </Form>
+                      </Modal>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              {documentModal && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="fixed top-0 z-10 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center"
+                >
+                  <Modal
+                    open={documentModal}
+                    onOk={() => navigate("/")}
+                    className="w-auto h-auto p-4"
+                  >
+                    <div className="p-4 rounded-lg w-full h-auto flex flex-col items-center ">
                       <div>
-                        <label htmlFor="licence">Licence:</label>
-                        <input
-                          type="file"
-                          id="licence"
-                          name="licence"
-                          onChange={(e) => handleFileChange(e, "licence")}
-                          disabled={documentUploadStatus.licence}
-                        />
+                        <h1 className="text-xl font-bold">Upload Documents</h1>
                       </div>
-                      <div className="">
-                        <button
-                          onClick={() => handleDocument("licence")}
-                          type="button"
-                          className="bg-[#2967ff] text-white rounded-xl p-1 w-full"
-                        >
-                          Upload
-                        </button>
-                      </div>
+                      <div className="w-auto max-lg:w-9/12 max-sm:w-7/12 my-10 grid grid-cols-2 gap-6">
+                        <div className="">
+                          <Form className="justify-center mr-4 ">
+                            <div className="mb-4">
+                              <label htmlFor="aadhar">Aadhar Card:</label>
+                              <Upload
+                                maxCount={1}
+                                listType="picture-card"
+                                className="avatar-uploader"
+                                disabled={documentUploadStatus.aadhar}
+                                // beforeUpload=
+                                onChange={(info) =>
+                                  handleDocument("aadhar", info.file)
+                                }
+                              >
+                                {aadharPreview ? (
+                                  <Image
+                                    src={aadharPreview}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div>Upload here</div>
+                                )}
 
-                      <div>
-                        <label htmlFor="pancard">PAN Card:</label>
-                        <input
-                          type="file"
-                          id="pancard"
-                          name="pancard"
-                          onChange={(e) => handleFileChange(e, "pancard")}
-                          disabled={documentUploadStatus.pancard}
-                        />
-                      </div>
-                      <div className="">
-                        <button
-                          onClick={() => handleDocument("pancard")}
-                          type="button"
-                          className="bg-[#2967ff] text-white rounded-xl p-1 w-full"
-                        >
-                          Upload
-                        </button>
-                      </div>
+                                {/* here is a demo of how loader is worked */}
+                                {/* {aadharPreview && (
+                              <>
+                                {loading ? (
+                                  <Spin />
+                                ) : (
+                                  <Image
+                                    src={aadharPreview}
+                                    className="w-full h-full object-cover"
+                                  />
+                                )}
+                              </>
+                            )}
+                            {!aadharPreview && <div>Upload here</div>} */}
 
-                      <div>
-                        <label htmlFor="vehicle">Vehicle image:</label>
-                        <input
-                          type="file"
-                          id="vehicle"
-                          name="vehicle"
-                          onChange={(e) => handleFileChange(e, "vehicle")}
-                          disabled={documentUploadStatus.vehicle}
-                        />
-                      </div>
-                      <div className="">
-                        <button
-                          onClick={() => handleDocument("vehicle")}
-                          type="button"
-                          className="bg-[#2967ff] text-white rounded-xl p-1 w-full"
-                        >
-                          Upload
-                        </button>
+                                {/* <Button icon={<UploadOutlined />}>
+                              Click to Upload Aadhar card
+                            </Button> */}
+                              </Upload>
+                            </div>
+                            <div className="">
+                              <label htmlFor="licence">Licence :</label>
+                              <Upload
+                                maxCount={1}
+                                listType="picture-card"
+                                disabled={documentUploadStatus.licence}
+                                onChange={(info) =>
+                                  handleDocument("licence", info.file)
+                                }
+                              >
+                                {licencePreview ? (
+                                  <Image
+                                    src={licencePreview}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div>Upload here</div>
+                                )}
+                                {/* <Image src={licencePreview} /> */}
+                                {/* <Button icon={<UploadOutlined />}>
+                              Click to Upload
+                            </Button> */}
+                              </Upload>
+                            </div>
+                          </Form>
+                        </div>
+                        <div className="">
+                          <Form className="justify-center ml-4">
+                            <div className="mb-4">
+                              <label htmlFor="vehicle">Vehicle:</label>
+                              <Upload
+                                maxCount={1}
+                                listType="picture-card"
+                                disabled={documentUploadStatus.vehicle}
+                                onChange={(info) =>
+                                  handleDocument("vehicle", info.file)
+                                }
+                              >
+                                {vehiclePreview ? (
+                                  <Image
+                                    src={vehiclePreview}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div>Upload here</div>
+                                )}
+                                {/* <Image src={vehiclePreview} className=" w-full " /> */}
+                                {/* <Button icon={<UploadOutlined />}>
+                              Click to Upload
+                            </Button> */}
+                              </Upload>
+                            </div>
+                            <div className="">
+                              <label htmlFor="pancard">Pancard Card:</label>
+                              <Upload
+                                maxCount={1}
+                                listType="picture-card"
+                                disabled={documentUploadStatus.pancard}
+                                onChange={(info) =>
+                                  handleDocument("pancard", info.file)
+                                }
+                              >
+                                {pancardPreview ? (
+                                  <Image
+                                    src={pancardPreview}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div>Upload here</div>
+                                )}
+                                {/* <Image src={pancardPreview} /> */}
+                                {/* <Button icon={<UploadOutlined />}>
+                              Click to Upload
+                            </Button> */}
+                              </Upload>
+                            </div>
+                          </Form>
+                        </div>
                       </div>
                     </div>
-                  </form>
-                  <div className="flex justify-center">
-                    <button
-                      className="p-2 bg-[#2967ff] w-1/2 rounded-lg text-white font-semibold hover:bg-blue-500"
-                      onClick={() => router("/delivery-partner")}
-                    >
-                      {anyOneDocument ? "Continue" : "Upload Later"}
-                    </button>
-                  </div>
-                </div>
-              </div> */}
-              <div className="bg-white p-4 rounded-lg w-11/12 h-auto flex flex-col items-center">
-                <Modal open={documentModal} onOk={handleDocument}>
-                  <div>
-                    <h1 className="text-3xl font-bold">Upload Documents</h1>
-                  </div>
-                  <div className="w-1/2 max-lg:w-9/12 max-sm:w-7/12 my-10 grid gap-10">
-                    <Form className="justify-center">
-                      <div className="w-11/12 grid grid-cols-1 items-center  gap-5">
-                        <div className="">
-                          <label htmlFor="aadhar">Aadhar Card:</label>
-                          <Upload
-                            maxCount={1}
-                            disabled={documentUploadStatus.aadhar}
-                            onChange={(info) =>
-                              handleDocument("aadhar", info.file)
-                            }
-                          >
-                            <Button icon={<UploadOutlined />}>
-                              Click to Upload Aadhar card
-                            </Button>
-                          </Upload>
-                        </div>
-                        <div className="">
-                          <label htmlFor="licence">Licence :</label>
-                          <Upload
-                            maxCount={1}
-                            disabled={documentUploadStatus.licence}
-                            onChange={(info) =>
-                              handleDocument("licence", info.file)
-                            }
-                          >
-                            <Button icon={<UploadOutlined />}>
-                              Click to Upload
-                            </Button>
-                          </Upload>
-                        </div>
-                        <div className="">
-                          <label htmlFor="vehicle">vehicle:</label>
-                          <Upload
-                            maxCount={1}
-                            disabled={documentUploadStatus.vehicle}
-                            onChange={(info) =>
-                              handleDocument("vehicle", info.file)
-                            }
-                          >
-                            <Button icon={<UploadOutlined />}>
-                              Click to Upload
-                            </Button>
-                          </Upload>
-                        </div>
-                        <div className="">
-                          <label htmlFor="pancard">pancard Card:</label>
-                          <Upload
-                            maxCount={1}
-                            disabled={documentUploadStatus.pancard}
-                            onChange={(info) =>
-                              handleDocument("pancard", info.file)
-                            }
-                          >
-                            <Button icon={<UploadOutlined />}>
-                              Click to Upload
-                            </Button>
-                          </Upload>
-                        </div>
-                      </div>
-                    </Form>
-                  </div>
-                </Modal>
-              </div>
-            </motion.div>
+                  </Modal>
+                </motion.div>
+              )}
+            </>
           )}
         </>
       )}

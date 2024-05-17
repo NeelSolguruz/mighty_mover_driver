@@ -1,25 +1,32 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { driver_forgotpassword } from "../http/staticTokenService";
-import NavLogo from "../assets/Images/icons/NavLogo"; // Update the import path for NavLogo
+import NavLogo from "../assets/Images/icons/NavLogo";
 import { useNavigate } from "react-router-dom";
+import { UserOutlined } from "@ant-design/icons";
+
 import axios, { AxiosError } from "axios";
+import { DRIVER_LOGIN, LOGIN_DATA_STRING } from "../assets/constant/constaint";
+import { Button, Form, Input } from "antd";
+import { useForm } from "antd/es/form/Form";
 
 export default function DriverForgotPassword() {
-  const router = useNavigate(); // Changed from useNavigate to useNavigate()
-
-  const [email, setEmail] = useState("");
+  const router = useNavigate();
+  // const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [form] = useForm();
 
-  const forgotPassword = async () => {
+  const forgotPassword = async (data) => {
+    console.log("data:", data);
     setLoading(true);
 
     try {
-      const response = await driver_forgotpassword({ email });
+      // const formdata = form.getFieldsValue();
+      const response = await driver_forgotpassword({ email: data.email });
       toast.success(response.data.message);
-      setEmail("");
+      // setEmail("");
 
-      router("/delivery-partner-login", { replace: true }); // Changed from router.push to router
+      router("/delivery-partner-login", { replace: true });
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError;
@@ -39,7 +46,59 @@ export default function DriverForgotPassword() {
 
   return (
     <>
-      <div className="w-full flex justify-center py-16">
+      <section className=" min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-md p-8  rounded-lg shadow-xl ">
+          <div className="flex justify-center mb-5 w-full h-full">
+            <div className="w-[50%] h-[50%]">
+              <NavLogo />
+            </div>
+          </div>
+          <div className="bg-[#2967ff] py-4 px-4 rounded-t-lg text-white">
+            <h1 className="text-xl text-white font-bold text-center">
+              {DRIVER_LOGIN.sign_in}
+            </h1>
+          </div>
+          <div className="mt-6">
+            <Form
+              form={form}
+              name="login-form"
+              onFinish={forgotPassword}
+              className="space-y-4"
+            >
+              <Form.Item
+                name="email"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please input your email!",
+                  },
+                ]}
+              >
+                <Input
+                  prefix={<UserOutlined />}
+                  placeholder={LOGIN_DATA_STRING.EMAIL}
+                  className="input-field"
+                  // value={email}
+                  // onChange={(e) => setEmail(e.target.value)}
+                />
+              </Form.Item>
+
+              <Form.Item>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className="btn-signin"
+                  block
+                  style={{ backgroundColor: "#2967ff" }}
+                >
+                  {<>{loading ? "Loading..." : "Submit"}</>}
+                </Button>
+              </Form.Item>
+            </Form>
+          </div>
+        </div>
+      </section>
+      {/* <div className="w-full flex justify-center py-16">
         <div className="flex flex-col items-center gap-10 py-10 w-5/12 max-lg:w-8/12 max-sm:w-11/12">
           <div className="w-[180px] max-sm:w-[150px]">
             <NavLogo />
@@ -68,7 +127,7 @@ export default function DriverForgotPassword() {
             </button>
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   );
 }

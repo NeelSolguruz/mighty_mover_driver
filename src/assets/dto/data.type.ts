@@ -36,6 +36,34 @@ interface ProductTableRowProps {
   //   weight: string;
 }
 
-export type AlignType = 'start' | 'end' | 'left' | 'right' | 'center' | 'justify' | 'match-parent';
+interface Document {
+  id: string;
+  internal_path: string;
+  document: string;
+  align?: AlignType | undefined;
+}
 
-export type { documentData, RootState, MenuItem, ProductTableRowProps };
+interface Address {
+  id: string;
+  state: string;
+  district: string;
+  area: string;
+}
+
+export type AlignType =
+  | "start"
+  | "end"
+  | "left"
+  | "right"
+  | "center"
+  | "justify"
+  | "match-parent";
+
+export type {
+  documentData,
+  RootState,
+  MenuItem,
+  ProductTableRowProps,
+  Document,
+  Address,
+};

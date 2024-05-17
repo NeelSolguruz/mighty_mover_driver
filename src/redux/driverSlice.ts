@@ -14,8 +14,6 @@ const initialState: initialState = {
   email: userData.email || null,
 };
 
-
-
 const driverSlice = createSlice({
   name: "driver",
   initialState: initialState,

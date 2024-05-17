@@ -3,6 +3,7 @@ import { AlignType, ProductTableRowProps } from "../dto/data.type";
 
 export const OTP_VERIFICATION = "OTP Verification";
 export const OTP_SENT_TO_EMAIL = "OTP sent to ";
+export const OTP_SENT_DESC = "we will send you an one time password on this email";
 export const DID_NOT_GET = "Didn't got a code";
 export const DRIVER_LOGIN = {
   sign_in: "Sign in as Driver.",

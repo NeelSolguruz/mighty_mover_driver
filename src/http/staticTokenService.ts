@@ -1,7 +1,7 @@
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 // import { error } from "console";
 const config = {
-  baseURL: "http://192.168.68.91:3000",
+  baseURL: `http://${import.meta.env.VITE_LOCAL_HOST}`,
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
@@ -10,18 +10,16 @@ const config = {
   },
 };
 
-export const driver_login = async (
-  payload: any
-): Promise<AxiosResponse<any, any>> => {
+export const driver_login = async (payload: any) => {
   return axios.post("/api/V1/driver/login", payload, config);
 };
-export const verify_driver_otp = async (
-  payload: any
-): Promise<AxiosResponse<any, any>> => {
+export const verify_driver_otp = async (payload: any) => {
   return axios.post("/api/V1/driver/verify", payload, config);
 };
-export const driver_forgotpassword = async (
-  payload: any
-): Promise<AxiosResponse<any, any>> => {
+export const driver_forgotpassword = async (payload: any) => {
   return axios.post("api/V1/driver/forgotPassword", payload, config);
+};
+
+export const driver_new_password = async (payload: any, token: any) => {
+  return axios.post(`/api/v1/user/resetPassword/${token}`, payload, config);
 };

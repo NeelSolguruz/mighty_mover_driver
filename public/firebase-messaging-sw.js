@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 // File: firebase-messaging-sw.js
 importScripts("https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js");
 importScripts("https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js");
@@ -51,7 +52,7 @@ if (messaging) {
         self.registration.showNotification(notificationTitle, notificationOptions);
       } else {
         // Skipping the event handling for notification
-        return new Promise(function (resolve, reject) { });
+        // return new Promise(function (resolve, reject) { });
       }
     });
   } catch (err) {

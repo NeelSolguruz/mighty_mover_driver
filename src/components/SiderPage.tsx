@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 // import { SIDE_PANEL } from "../assets/constant/constaint";
 import NavLogo from "../assets/Images/icons/NavLogo";
 import { FaHome } from "react-icons/fa";
+import { GrDocumentImage } from "react-icons/gr";
 
 const { Sider } = Layout;
 
@@ -13,6 +14,16 @@ export default function SiderPage({ collapse }: { collapse: boolean }) {
         name: "Dashboard",
         navigate: "/",
         icon: <FaHome />,
+      },
+      {
+        name: "Document Page",
+        navigate: "/documentData",
+        icon: <GrDocumentImage />,
+      },
+      {
+        name: "Address Page",
+        navigate: "/addresspage",
+        icon: <GrDocumentImage />,
       },
     ],
   };
@@ -47,7 +58,7 @@ export default function SiderPage({ collapse }: { collapse: boolean }) {
         >
           {SIDE_PANEL.menu.map((item) => (
             <Menu.Item
-              key={item.navigate}
+              key={item.name}
               icon={item.icon}
               onClick={() => navigate(item.navigate)}
             >

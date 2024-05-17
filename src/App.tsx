@@ -14,15 +14,17 @@ const Dashboard = lazy(() => import("./components/Dashboard"));
 // const Driver_Vehicle = lazy(() => import("./components/DriverVehical"));
 const DocumentData = lazy(() => import("./components/DriverDocument"));
 const ProtectedRoutes = lazy(() => import("./utils/ProtectedRoutes"));
-const PublicRoute = lazy(() => import("./utils/PublicRoute"));
+// const PublicRoute = lazy(() => import("./utils/PublicRoute"));
 const FixedLayout = lazy(() => import("./components/Layout"));
 const ForogotPassword = lazy(() => import("./components/DriverForgotPassword"));
+const AddressPage = lazy(() => import("./components/DriverAddress"));
 function App() {
   // const [count, setCount] = useState(0)
   const fcm_token = useFcmToken();
   if (fcm_token) {
     localStorage.setItem("fcm_token", fcm_token);
   }
+  console.log("fcm_token", fcm_token);
 
   return (
     <>
@@ -35,14 +37,12 @@ function App() {
             {/* <Route path="/driver" element={<Driver_Vehicle />} /> */}
 
             <Route path="/documentData" element={<DocumentData />} />
+            <Route path="/addresspage" element={<AddressPage />} />
           </Route>
           {/* </Route> */}
           {/* <Route element={<PublicRoute />}> */}
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/delivery-forgot-password"
-            element={<ForogotPassword />}
-          />
+          <Route path="/login/forgot-password" element={<ForogotPassword />} />
           {/* </Route> */}
         </Routes>
       </div>

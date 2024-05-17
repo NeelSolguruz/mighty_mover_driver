@@ -1,27 +1,15 @@
 import { Card, Modal, Table } from "antd";
 import {
-  //   DASHBOARD_STATS_COSTS_MONEY,
   DASHBOARD_STATS_PROFIT_VAL,
-  //   DASHBOARD_STATS_REVENUE_VAL,
-  //   DASHBOARD_STATS_COSTS_MONEY_VAL,
-  //   DASHBOARD_STATS_PROFIT,
   DASHBOARD_TOTAL_EARNING,
   DASHBOARD_IN_PROGRESS,
   DASHBOARD_DELIVERED,
   DASHBOARD_ACCEPTED,
   DASHBOARD_REJECTED,
   DRIVERORDER_DATA_COL,
-  //   DASHBOARD_GOAL,
-  // PURCHASE_ORDER_STATUS,
-  // DELIVERED,
-  // INPROGRESS,
-  // NOTDELIVERED,
-  // MONTHLY_DATA,
-  // MONTHLY_TARGET,
 } from "../assets/constant/constaint";
 
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-// import CountUp from 'react-countup';
 import { useDispatch } from "react-redux";
 import { useCallback, useEffect, useState } from "react";
 import { setPage } from "../redux/pageSlice";
@@ -36,14 +24,7 @@ import {
   InfoWindow,
   useJsApiLoader,
 } from "@react-google-maps/api";
-// import {
-//   DirectionsRenderer,
-//   DirectionsService,
-//   GoogleMap,
-//   InfoWindow,
-//   useJsApiLoader,
-// } from "../components/GoogleMap";
-// import Linechart from './linechart';
+
 export default function Dashboard() {
   const [Revenue, setRevenue] = useState(12345);
   const [Order, setOrder] = useState(0);
@@ -70,15 +51,8 @@ export default function Dashboard() {
     try {
       //  const skip = (page - 1) * 10;
       const response = await http.get(`/api/v1/driver-order/history`);
-      //  console.log();
-      // console.log(response.data.data);
       setDrivertOrderData(response.data.data);
-      // console.log(total);
-      //  setCurrentPage(page);
       toast.success(response.data.message);
-
-      //  setTotal(response.data.total);
-      //  setLoading(false);
     } catch (error) {
       handleError(error as Error);
     } finally {
@@ -106,12 +80,7 @@ export default function Dashboard() {
       }
     }
   };
-  useEffect(() => {
-    //  dispatch(setPage("Category"));
-    void fetchData();
-  }, [fetchData]);
 
-  //   const [goal, setgoal] = useState(1000);
   const TotalEarning = async () => {
     try {
       const response = await http.get("/api/v1/driver-order/earning");
@@ -129,32 +98,32 @@ export default function Dashboard() {
       setDeliverd(response.data.data.Delivered || 0);
       setAccepted(response.data.data.Accepted || 0);
       setRejected(response.data.data.Cancel || 0);
-      //   setgoal(response.data.data.Total);
-      // setRevenue(response.data.data.total_earning);
-      // setRevenue(response.data.data.total_earnings);
     } catch (error) {
       console.log(error);
     }
   };
+  // const dummy = async () => {
+  //   try {
+  //     const response = await http.get("/api/v1/vehicle");
+  //     console.log(response.data.data);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
   const dispatch = useDispatch();
   useEffect(() => {
     TotalEarning();
     driverOrder();
     dispatch(setPage("Dashboard"));
-  }, [dispatch]);
+    void fetchData();
+    // dummy();
+  }, [dispatch, fetchData]);
 
   const handleMapButtonClick = async (item: ProductTableRowProps) => {
     console.log(item.pickup_latitude);
     setSelectedOrder(item);
     const directionsService = new google.maps.DirectionsService();
-    // const pickupLocation = {
-    //   lat: parseFloat(item.pickup_latitude),
-    //   lng: parseFloat(item.pickup_longitude),
-    // };
-    // const deliveryLocation = {
-    //   lat: parseFloat(item.delivery_latitude),
-    //   lng: parseFloat(item.delivery_longitude),
-    // };
+
     const results = await directionsService.route({
       origin: item.Pickup,
       destination: item.Delivery,
@@ -182,7 +151,6 @@ export default function Dashboard() {
   return (
     <div className="overflow-hidden container">
       <div className="grid grid-cols-5 gap-2 m-4 w-auto  max-md:grid-cols-1 max-md:w-auto ">
-        {/* <div className="w-full h-full"> */}
         {/* total Earning card */}
         <Card bordered={false} className="w-full bg-blue-50 max-md:w-auto">
           <div className="w-full flex-col ">
@@ -238,8 +206,6 @@ export default function Dashboard() {
             </div>
           </div>
         </Card>
-        {/* </div> */}
-        {/* <div className=" w-full h-full"> */}
 
         {/* IN PROGRESS CARD */}
         <Card
@@ -255,8 +221,6 @@ export default function Dashboard() {
             </div>
           </div>
         </Card>
-        {/* </div> */}
-        {/* <div className=" w-full h-full "> */}
 
         {/*  DELIVERED CARD*/}
         <Card
@@ -288,8 +252,7 @@ export default function Dashboard() {
             </div>
           </div>
         </Card>
-        {/* </div> */}
-        {/* <div className=" w-full h-full"> */}
+
         {/*  Rejected Card*/}
         <Card bordered={false} className="w-full flex-1 h-auto flex bg-blue-50">
           <div className="w-full flex-col ">
@@ -304,18 +267,6 @@ export default function Dashboard() {
           </div>
         </Card>
         {/* Goal Card */}
-        {/* <Card bordered={false} className="w-full flex-1 h-auto flex bg-blue-50">
-          <div className="w-full flex-col ">
-            <div className="flex justify-start w-full text-[15px] font-semibold ">
-              {DASHBOARD_GOAL}
-            </div>
-            <div className="flex justify-start w-full  font-bold gap-1 items-center">
-              <div style={{ fontWeight: "700" }} className="text-[24px]">
-                {goal}
-              </div>
-            </div>
-          </div>
-        </Card> */}
       </div>
       <div>
         <Card title="Driver Orders History" className="m-2">
@@ -334,7 +285,7 @@ export default function Dashboard() {
             columns={DRIVERORDER_DATA_COL()}
             // bordered
             onRow={(record) => ({
-              onClick: () => handleMapButtonClick(record), // Call handleMapButtonClick with the clicked record
+              onClick: () => handleMapButtonClick(record),
             })}
             sticky
             className="w-full"
@@ -343,12 +294,13 @@ export default function Dashboard() {
       </div>
       <div>
         {selectedOrder && (
-          <div className="fixed inset-0 w-full flex justify-center items-center bg-gray-500 bg-opacity-50 z-50">
+          <div className="fixed inset-0 w-full flex justify-center items-center bg-gray-500 bg-opacity-50 z-50 ">
             <Modal
               open={detailModel}
               onCancel={handleCloseDetailModel}
               footer={null}
-              className="bg-white rounded-lg w-auto h-auto"
+              width={900}
+              className=" rounded-lg w-auto h-auto md:w-auto max-md:w-full max-md:h-full"
             >
               <div className="w-full h-full flex flex-col">
                 {/* Header */}
@@ -357,24 +309,24 @@ export default function Dashboard() {
                 </div>
 
                 {/* Content */}
-                <div className="flex-grow w-full gap-4 p-4 border border-green-500 flex flex-col md:flex-row">
+                <div className="flex-grow w-full gap-4 p-4  flex flex-col md:flex-row">
                   {/* Order Details */}
-                  <div className="w-auto h-auto">
-                    <p>Order ID: {selectedOrder.orderId}</p>
-                    <p>
+                  <div className="w-1/2 h-1/2 flex flex-col gap-2">
+                    {/* <p>Order ID: {selectedOrder.orderId}</p> */}
+                    <span>
                       Customer Name:{" "}
                       {`${selectedOrder.firstName} ${selectedOrder.lastName}`}
-                    </p>
-                    <p>Pickup Location: {selectedOrder.Pickup}</p>
-                    <p>Delivery Location: {selectedOrder.Delivery}</p>
-                    <p>Payment Type: {selectedOrder.Payment_type}</p>
-                    <p>Payment Status: {selectedOrder.Payment_status}</p>
-                    <p>Amount Collect: {selectedOrder.Amount_collect}</p>
+                    </span>
+                    <span>Pickup Location: {selectedOrder.Pickup}</span>
+                    <span>Delivery Location: {selectedOrder.Delivery}</span>
+                    <span>Payment Type: {selectedOrder.Payment_type}</span>
+                    <span>Payment Status: {selectedOrder.Payment_status}</span>
+                    <span>Billing Amount: {selectedOrder.Amount_collect}</span>
                   </div>
 
                   {/* Map */}
                   {isLoaded ? (
-                    <div className="w-full md:w-1/2 h-auto md:h-96 px-1 py-1 shadow-sm rounded border border-red-500">
+                    <div className="w-full md:w-[100%] h-auto md:h-96 px-1 py-1 shadow-sm rounded ">
                       <GoogleMap
                         center={center_coordinates}
                         zoom={15}

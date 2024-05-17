@@ -1,20 +1,16 @@
-// import React from "react";
-
 import { useCallback, useEffect, useState } from "react";
-import http from "../http/http";
-import { AlignType, Document } from "../assets/dto/data.type";
-import { Card, Table } from "antd";
+import { Address, AlignType } from "../assets/dto/data.type";
 import { ColumnProps } from "antd/es/table";
+import { Card, Table } from "antd";
 import { useDispatch } from "react-redux";
-import { setPage } from "../redux/pageSlice";
+import http from "../http/http";
 import { toast } from "sonner";
-// import { AlignType } from "./src/assets/dto/data.type.ts";
-// import { DOCUMENT_DATA_COL } fro
+import { setPage } from "../redux/pageSlice";
 
-function DriverDocument() {
+function DriverAddress() {
+  const [AddressData, setAddressData] = useState<Address[]>([]);
   const dispatch = useDispatch();
-  const [documentData, setDocumentDatq] = useState<Document[]>([]);
-  const DOCUMENT_DATA_COL = (): ColumnProps<Document>[] => [
+  const ADDRESS_DATA_COl = (): ColumnProps<Address>[] => [
     {
       title: "Sr.No.",
       dataIndex: "index",
@@ -22,37 +18,36 @@ function DriverDocument() {
       align: "center" as AlignType,
     },
     {
-      title: "Document Preview",
-      dataIndex: "document",
+      title: "state",
+      dataIndex: "state",
+      
       align: "center" as AlignType,
-      render: (document) => (
-        <img
-          src={document}
-          alt="Document"
-          // style={{ width: "150px", height: "150px" }}
-        />
-      ),
     },
     {
-      title: "Document Type",
-      dataIndex: "internal_path",
-      render: (text, record) => record.internal_path.split("/")[0],
+      title: "district",
+      dataIndex: "district",
+     
+      align: "center" as AlignType,
+    },
+    {
+      title: "area",
+      dataIndex: "area",
+    
       align: "center" as AlignType,
     },
   ];
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await http.get("api/v1/document");
-      setDocumentDatq(response.data.data);
+      const response = await http.get("/api/v1/driver/address");
+      setAddressData(response.data.data);
       toast.success(response.data.message);
     } catch (error) {
       console.error(error);
     }
   }, []);
-
   useEffect(() => {
-    dispatch(setPage("Document Page"));
+    dispatch(setPage("Address Page"));
     void fetchData();
   }, [fetchData, dispatch]);
 
@@ -61,7 +56,7 @@ function DriverDocument() {
       <Card title="Document Review" className="m-2">
         <Table
           rowClassName="text-center"
-          dataSource={documentData}
+          dataSource={AddressData}
           // pagination={{
           //   pageSize: 10,
           //   total: total,
@@ -71,7 +66,7 @@ function DriverDocument() {
           //   },
           // }}
           // pagination={false}
-          columns={DOCUMENT_DATA_COL()}
+          columns={ADDRESS_DATA_COl()}
           // bordered
           sticky
           className="w-full"
@@ -81,4 +76,4 @@ function DriverDocument() {
   );
 }
 
-export default DriverDocument;
+export default DriverAddress;
