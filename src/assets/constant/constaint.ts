@@ -3,7 +3,8 @@ import { AlignType, ProductTableRowProps } from "../dto/data.type";
 
 export const OTP_VERIFICATION = "OTP Verification";
 export const OTP_SENT_TO_EMAIL = "OTP sent to ";
-export const OTP_SENT_DESC = "we will send you an one time password on this email";
+export const OTP_SENT_DESC =
+  "we will send you an one time password on this email";
 export const DID_NOT_GET = "Didn't got a code";
 export const DRIVER_LOGIN = {
   sign_in: "Sign in as Driver.",
@@ -35,6 +36,7 @@ export const DASHBOARD_IN_PROGRESS = " In Progress";
 export const DASHBOARD_DELIVERED = "Delivered";
 export const DASHBOARD_ACCEPTED = "Accepted";
 export const DASHBOARD_REJECTED = "Rejected";
+export const DASHBOARD_TOTAL = "Total Orders";
 // export const DASHBOARD_GOAL = "Rejected";
 export const DASHBOARD_STATS_REVENUE_VAL = 10000000;
 export const DASHBOARD_STATS_COSTS_MONEY_VAL = 1000000;
@@ -43,23 +45,27 @@ export const DASHBOARD_STATS_PROFIT_VAL =
 export const COPYRIGHT = "Copyright © 2024 Mighty Movers All rights reserved.";
 export const TERMS = "Term & Conditions | Privacy & Policy";
 
-export const DRIVERORDER_DATA_COL = (): ColumnProps<ProductTableRowProps>[] => [
+export const DRIVERORDER_DATA_COL = (
+  currentPage: number,
+  pageSize: number
+): ColumnProps<ProductTableRowProps>[] => [
   {
     title: "Sr.No.",
     dataIndex: "id",
-    render: (_, __, index) => index + 1,
+    render: (_, __, index) => (currentPage - 1) * pageSize + index + 1,
 
     align: "center" as AlignType,
   },
   {
     title: "Name",
     dataIndex: "",
-    render: (record) => `${record.firstName} ${record.lastName}`,
+    render: (record: ProductTableRowProps) =>
+      `${record.first_name} ${record.last_name}`,
     align: "center" as AlignType,
   },
   {
     title: "Collected Amount",
-    dataIndex: "Amount_collect",
+    dataIndex: "amount_collect",
     align: "center" as AlignType,
   },
   {
@@ -69,22 +75,35 @@ export const DRIVERORDER_DATA_COL = (): ColumnProps<ProductTableRowProps>[] => [
   },
   {
     title: "Pickup Location ",
-    dataIndex: "Pickup",
+    dataIndex: "pickup",
     align: "center" as AlignType,
   },
   {
     title: "Delivery",
-    dataIndex: "Delivery",
-    align: "center" as AlignType,
-  },
-  {
-    title: "Payment Status",
-    dataIndex: "Payment_status",
+    dataIndex: "delivery",
     align: "center" as AlignType,
   },
   {
     title: "Payment Type",
-    dataIndex: "Payment_type",
+    dataIndex: "payment_type",
+    align: "center" as AlignType,
+  },
+  {
+    title: "Order Status",
+    dataIndex: "status",
     align: "center" as AlignType,
   },
 ];
+
+export const OK = "OK";
+export const CANCEL = "Cancel";
+export const BACK_BUTTON = "Back";
+export const ADD_ITEM = "Add Item";
+export const ADD_USER = "Add User";
+export const EDIT_ITEM = "Edit Item";
+export const REMOVE_ITEM = "Remove Item";
+export const DELETE = "Delete";
+export const EDIT_BUTTON = " Edit";
+export const DELETE_BUTTON = " Delete";
+
+export const DELETE_CONFIRMATION = "Are you sure you want to delete this item?";

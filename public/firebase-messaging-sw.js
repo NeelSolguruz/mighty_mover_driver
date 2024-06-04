@@ -1,12 +1,15 @@
 /* eslint-disable no-undef */
 // File: firebase-messaging-sw.js
 importScripts("https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js");
-importScripts("https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js");
-
+importScripts(
+  "https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"
+);
 // Set Firebase configuration, once available
+
 self.addEventListener('fetch', () => {
   try {
     const urlParams = new URLSearchParams(location.search);
+    console.log('urlParams', urlParams);
     self.firebaseConfig = Object.fromEntries(urlParams);
   } catch (err) {
     console.error('Failed to add event listener', err);
@@ -38,9 +41,9 @@ if (messaging) {
       const notificationOptions = {
         body: payload.notification.body,
         tag: notificationTitle, // tag is added to ovverride the notification with latest update
-        icon: payload.notification?.image || data.image,
+        // icon: payload.notification?.image || data.image,
         data: {
-          url: payload?.data?.openUrl,// This should contain the URL you want to open
+          url: "https://www.google.com/.",// This should contain the URL you want to open
         },
       }
       // Optional
@@ -55,7 +58,32 @@ if (messaging) {
         // return new Promise(function (resolve, reject) { });
       }
     });
+
   } catch (err) {
     console.log(err);
   }
 }
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  // Get the URL from the notification data
+  const notificationData = event.notification.data;
+  const redirectUrl = notificationData.url || 'https://www.google.com/';
+
+  // Open the URL in the client
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
+        }
+      }
+
+      if (clients.openWindow) {
+        return clients.openWindow(redirectUrl);
+      }
+    })
+  );
+});
+
+self.addEventListener("notificationclick", console.log);

@@ -10,7 +10,7 @@ import {
 } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { PlusOutlined } from "@ant-design/icons";
-import { FaHome, FaRegUserCircle, FaUser } from "react-icons/fa";
+import { FaAddressCard, FaHome, FaUser } from "react-icons/fa";
 import { useState, useEffect, ChangeEventHandler } from "react";
 import ImgCrop from "antd-img-crop";
 import type { GetProp, UploadProps, UploadFile } from "antd";
@@ -26,21 +26,23 @@ import http from "../http/http";
 import Loader from "./Loader";
 import { HiMiniBarsArrowDown } from "react-icons/hi2";
 // import { userData } from '../assets/userData';
-import { IoMdSettings } from "react-icons/io";
-import { BiSolidMessageEdit } from "react-icons/bi";
+// import { IoMdSettings } from "react-icons/io";
+// import { BiSolidMessageEdit } from "react-icons/bi";
 // import { RiUserSettingsFill } from 'react-icons/ri';
 // import { TbSettingsCog } from 'react-icons/tb';
-import { FaCity } from "react-icons/fa";
-import { RiCoupon2Fill } from "react-icons/ri";
-import { FaMotorcycle } from "react-icons/fa6";
-import { RiUserSettingsLine } from "react-icons/ri";
-import {
-  MdOutlineCategory,
-  MdOutlineContactPage,
-  MdOutlinePayment,
-} from "react-icons/md";
+// import { FaCity } from "react-icons/fa";
+// import { RiCoupon2Fill } from "react-icons/ri";
+// import { FaMotorcycle } from "react-icons/fa6";
+// import { RiUserSettingsLine } from "react-icons/ri";
+// import {
+//   MdOutlineCategory,
+//   // MdOutlineContactPage,
+//   MdOutlinePayment,
+// } from "react-icons/md";
 import { GrDocumentImage } from "react-icons/gr";
-import { set } from "firebase/database";
+import { useDispatch } from "react-redux";
+import { driverLogout } from "../redux/driverSlice";
+// import { set } from "firebase/database";
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 
 export default function HeaderPage({
@@ -68,7 +70,7 @@ export default function HeaderPage({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const navigate = useNavigate();
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   const handleLogout = async () => {
     try {
@@ -76,7 +78,7 @@ export default function HeaderPage({
       toast.success(logoutDriver.data.message);
       console.log(logoutDriver);
       navigate("/login");
-      // dispatch(Adminlogout());
+      dispatch(driverLogout());
 
       setIsLoading(true);
     } catch (error) {
@@ -128,7 +130,6 @@ export default function HeaderPage({
     }
   };
   useEffect(() => {
-    
     fetchData();
   }, []);
 
@@ -142,7 +143,6 @@ export default function HeaderPage({
       toast.success(updateRecord.data.message);
       setIsModalOpen(false);
       setIsPasswordModalOpen(false);
-     
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<{
@@ -309,35 +309,11 @@ export default function HeaderPage({
     case "Dashboard":
       logo = <FaHome />;
       break;
-    case "Document Page":
+    case "Document":
       logo = <GrDocumentImage />;
       break;
-    case "Delivery Page":
-      logo = <FaRegUserCircle />;
-      break;
-    case "Payment":
-      logo = <MdOutlinePayment />;
-      break;
-    case "Category":
-      logo = <MdOutlineCategory />;
-      break;
-    case "City":
-      logo = <FaCity />;
-      break;
-    case "Coupon":
-      logo = <RiCoupon2Fill />;
-      break;
-    case "Blog":
-      logo = <BiSolidMessageEdit />;
-      break;
-    case "Vehicle":
-      logo = <FaMotorcycle />;
-      break;
-    case "Admin":
-      logo = <RiUserSettingsLine />;
-      break;
-    case "settings":
-      logo = <IoMdSettings />;
+    case "Address":
+      logo = <FaAddressCard />;
       break;
     default:
       logo = null;

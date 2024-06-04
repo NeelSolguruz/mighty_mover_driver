@@ -4,7 +4,7 @@ import { RootState } from "../app/store";
 
 const PublicRoute = () => {
   const driver = useSelector((state: RootState) => state.driver);
-  console.log(driver);
+  // console.log(driver);
 
   return !driver.token ? <Outlet /> : <Navigate to="/" />;
 };

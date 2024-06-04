@@ -18,21 +18,23 @@ interface MenuItem {
   submenu: MenuItem[];
 }
 interface ProductTableRowProps {
-  orderId: number;
-  firstName: string;
-  lastName: string;
+  id: string;
+  order_id: string | number;
+  first_name: string;
+  last_name: string;
   contact: string;
-  Pickup: string;
-  Delivery: string;
+  pickup: string;
+  delivery: string;
   // pickupTime: string;
   // deliveryTime: string;
-  Payment_status: string;
-  Payment_type: string;
-  Amount_collect: number;
+  // Payment_status: string;
+  payment_type: string;
+  amount_collect: number;
   pickup_longitude: string;
   pickup_latitude: string;
   delivery_longitude: string;
   delivery_latitude: string;
+  status: string;
   //   weight: string;
 }
 
@@ -41,6 +43,15 @@ interface Document {
   internal_path: string;
   document: string;
   align?: AlignType | undefined;
+}
+
+interface CurrentOrder {
+  id: string;
+  order_id: string;
+  pickup: Address;
+  delivery: Address;
+  payment_type: string;
+  amount_collect: number;
 }
 
 interface Address {
@@ -66,4 +77,5 @@ export type {
   ProductTableRowProps,
   Document,
   Address,
+  CurrentOrder,
 };

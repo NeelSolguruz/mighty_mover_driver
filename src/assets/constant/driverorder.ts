@@ -1,5 +1,5 @@
 import { ColumnProps } from "antd/es/table";
-import { AlignType } from "../dto/data.type";
+import { Document, AlignType } from "../dto/data.type";
 // import { useNavigate } from "react-router-dom";
 // import { Button } from "antd/es/radio";
 
@@ -25,6 +25,10 @@ export const DOCUMENT_DATA_COL = (): ColumnProps<Document>[] => [
 ];
 
 // export const Categories_page: Categories[] = [
+  //  "pickup_address_id": "b233599b-3823-4d87-b610-55de3dc584fc",
+  //       "delivery_address_id": "2e325ef4-c47e-4abe-abcb-6970b448e7ee",
+  //       "fk_payment_method": "93dee9ae-b327-4768-ab65-57da50042f8d",
+  //       "total_price": 71
 //     {
 //         id: '0aa08c76-f893-4c75-a4a3-31df03665ba1',
 //         name: 'Electronics',

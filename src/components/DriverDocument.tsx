@@ -52,7 +52,7 @@ function DriverDocument() {
   }, []);
 
   useEffect(() => {
-    dispatch(setPage("Document Page"));
+    dispatch(setPage("Document"));
     void fetchData();
   }, [fetchData, dispatch]);
 

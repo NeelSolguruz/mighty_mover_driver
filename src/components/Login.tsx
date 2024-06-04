@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 // import Link from "next/Link";
 import http from "../http/http";
 import axios, { AxiosError } from "axios";
@@ -67,8 +67,8 @@ function Login() {
   const [modal, setModal] = useState(false);
   const [vehicleTypes, setVehicleTypes] = useState<string[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[] | undefined>();
-  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
-  const inputRefs = useRef<HTMLInputElement[] | null>([]);
+   const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+ const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   // const [otp, setOtp] = useState("");
 
   const dispatch = useDispatch();
@@ -95,8 +95,8 @@ function Login() {
         OTP: otp.join(""),
         fcm_token: ftoken,
       });
-     const updatedFlag = user_details.data.data.flag;
-     setFlag(updatedFlag);
+      const updatedFlag = user_details.data.data.flag;
+      setFlag(updatedFlag);
       if (updatedFlag == true) {
         navigate("/");
         const obj = {
@@ -108,6 +108,7 @@ function Login() {
         console.log("after flag", !flag);
         console.log(obj);
         localStorage.setItem("Driver", JSON.stringify(obj));
+        dispatch(driverAdd(obj));
       } else {
         setLocalDriver(user_details.data.data.name);
         setLocalEmail(user_details.data.data.email);
@@ -116,6 +117,7 @@ function Login() {
         };
         console.log(obj);
         localStorage.setItem("Driver", JSON.stringify(obj));
+        fetchVehicleTypes();
         setLoading(false);
         resetForm();
         setotppage(false);
@@ -195,9 +197,9 @@ function Login() {
   }, []);
 
   const handleSubmit = async (data) => {
-    console.log("====================================");
-    console.log(data);
-    console.log("====================================");
+    // console.log("====================================");
+    // console.log(data);
+    // console.log("====================================");
     // e.preventDefault();
     setLoading(true);
 
@@ -236,29 +238,37 @@ function Login() {
     }
   };
 
-  const handleChange = (index: number, value: string) => {
-    const newOtp = [...otp];
-    newOtp[index] = value;
-
-    if (value && index < otp.length - 1 && inputRefs.current) {
-      inputRefs.current[index + 1].focus();
-    }
-    console.log("otp index", newOtp);
-    setOtp(newOtp);
-  };
-  const handleKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (e.key === "Backspace" && index > 0 && !otp[index]) {
+  const handleInputChange = useCallback(
+    (index: number, value: string) => {
       const newOtp = [...otp];
-      if (inputRefs.current && inputRefs.current[index - 1]) {
-        inputRefs.current[index - 1].focus();
+      newOtp[index] = value;
+
+      if (value && index < otp.length - 1 && inputRefs.current[index + 1]) {
+        inputRefs.current[index + 1]?.focus();
       }
-      newOtp[index - 1] = "";
+
       setOtp(newOtp);
-    }
-  };
+    },
+    [otp]
+  );
+
+  const handleInputKeyDown = useCallback(
+    (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Backspace") {
+        if (index > 0 && !otp[index]) {
+          const newOtp = [...otp];
+          newOtp[index - 1] = "";
+          setOtp(newOtp);
+          inputRefs.current[index - 1]?.focus();
+        } else {
+          const newOtp = [...otp];
+          newOtp[index] = "";
+          setOtp(newOtp);
+        }
+      }
+    },
+    [otp]
+  );
   const handleVehicleSubmit = async () => {
     console.log("hello");
     setLoading(true);
@@ -430,18 +440,18 @@ function Login() {
                             // />
                           // ))} */}
                         {otp.map((digit, index) => (
-                          <Input
+                          <input
                             key={index}
-                            className="border border-black w-10 h-10 rounded-lg text-center text-xl font-medium max-[386px]:w-8 max-[386px]:h-8 "
+                            className="border border-black w-10 h-10 rounded-lg text-center text-xl font-medium max-[386px]:w-8 max-[386px]:h-8"
                             type="text"
                             maxLength={1}
                             value={digit}
                             autoFocus={index === 0}
                             ref={(ref) => (inputRefs.current[index] = ref)}
                             onChange={(e) =>
-                              handleChange(index, e.target.value)
+                              handleInputChange(index, e.target.value)
                             }
-                            onKeyDown={(e) => handleKeyDown(index, e)}
+                            onKeyDown={(e) => handleInputKeyDown(index, e)}
                           />
                         ))}
                       </div>

@@ -1,34 +1,47 @@
 import { Layout, Menu } from "antd";
-import { useNavigate, useLocation } from "react-router-dom";
-// import { SIDE_PANEL } from "../assets/constant/constaint";
+import { useLocation, useNavigate } from "react-router-dom";
 import NavLogo from "../assets/Images/icons/NavLogo";
-import { FaHome } from "react-icons/fa";
+import { FaAddressCard, FaHome } from "react-icons/fa";
 import { GrDocumentImage } from "react-icons/gr";
+import { useEffect } from "react";
 
 const { Sider } = Layout;
 
 export default function SiderPage({ collapse }: { collapse: boolean }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    window.location.pathname;
+  }, []);
+
   const SIDE_PANEL = {
     menu: [
       {
+        key: "/",
         name: "Dashboard",
         navigate: "/",
         icon: <FaHome />,
       },
       {
-        name: "Document Page",
-        navigate: "/documentData",
+        key: "/document",
+        name: "Document",
+        navigate: "/document",
         icon: <GrDocumentImage />,
       },
       {
-        name: "Address Page",
-        navigate: "/addresspage",
-        icon: <GrDocumentImage />,
+        key: "/address",
+        name: "Address",
+        navigate: "/address",
+        icon: <FaAddressCard />,
+      },
+      {
+        key: "/order",
+        name: "Order",
+        navigate: "/order",
+        icon: <FaAddressCard />,
       },
     ],
   };
-  const navigate = useNavigate();
-  const location = useLocation();
 
   return (
     <div className="h-screen sticky top-0 shadow-lg">
@@ -58,7 +71,7 @@ export default function SiderPage({ collapse }: { collapse: boolean }) {
         >
           {SIDE_PANEL.menu.map((item) => (
             <Menu.Item
-              key={item.name}
+              key={item.key}
               icon={item.icon}
               onClick={() => navigate(item.navigate)}
             >
